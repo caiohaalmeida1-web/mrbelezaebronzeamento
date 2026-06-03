@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ========================================================== */
+    /*  PALETA MÉRCIA REGINA — variáveis em HEX e HSL              */
+    /* ========================================================== */
+    --brand-brown: #2c1000;
+    --brand-caramel: #8b4513;
+    --brand-gold: #d4960a;
+    --brand-amber: #e87520;
+    --brand-sun: #f5c200;
+    --brand-cream: #fef8ee;
+    --brand-warm: #fff3d8;
+
+    /* shadcn HSL tokens (mapeados na paleta da marca) */
+    --background: 36 90% 96%; /* cream */
+    --foreground: 20 100% 8%; /* brown */
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 100% 8%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 100% 8%;
+
+    --primary: 20 100% 8%; /* brown */
+    --primary-foreground: 50 100% 48%; /* sun */
+
+    --secondary: 39 90% 92%;
+    --secondary-foreground: 20 100% 8%;
+
+    --muted: 39 80% 92%;
+    --muted-foreground: 25 35% 35%;
+
+    --accent: 22 82% 52%; /* amber */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 75% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 39 60% 85%;
+    --input: 39 60% 88%;
+    --ring: 22 82% 52%;
+
+    --radius: 0.875rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-brand-cream text-brand-brown font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background: var(--brand-amber);
+    color: white;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-amber ring-offset-2 ring-offset-brand-cream;
+  }
+}
+
+@layer components {
+  /* Tipografia */
+  .h-display {
+    @apply font-display font-medium leading-[1.05] tracking-tight;
+  }
+  .h-display-italic {
+    @apply font-display italic font-medium leading-[1.05] tracking-tight;
+  }
+  .label-eyebrow {
+    @apply inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] font-semibold text-brand-caramel;
+  }
+  .label-eyebrow::before {
+    content: "";
+    @apply block h-px w-8 bg-brand-gold;
+  }
+
+  /* Container padrão */
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8;
+  }
+
+  /* Botões custom da marca */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-brown px-7 py-3.5 text-sm font-semibold text-brand-sun shadow-lg shadow-brand-brown/20 transition-all hover:translate-y-[-2px] hover:shadow-xl hover:shadow-brand-brown/30 active:translate-y-0;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-full border-2 border-brand-brown bg-transparent px-7 py-3 text-sm font-semibold text-brand-brown transition-all hover:bg-brand-brown hover:text-brand-sun;
+  }
+  .btn-whatsapp {
+    @apply inline-flex items-center gap-2 rounded-full bg-[#25D366] px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#25D366]/25 transition-all hover:translate-y-[-2px] hover:shadow-xl hover:shadow-[#25D366]/35;
+  }
+
+  /* Mix-blend para logos sobre fundos claros */
+  .logo-blend {
+    mix-blend-mode: multiply;
+  }
+
+  /* Card padrão da marca */
+  .card-brand {
+    @apply rounded-3xl bg-white shadow-[0_2px_24px_-8px_rgba(44,16,0,0.10)] ring-1 ring-brand-gold/10 transition-all hover:shadow-[0_8px_40px_-12px_rgba(44,16,0,0.18)] hover:-translate-y-0.5;
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Texto gradiente */
+  .text-gradient-amber {
+    background: linear-gradient(135deg, #f5c200 0%, #e87520 60%, #c04400 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Background patterns */
+  .bg-grain {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      rgba(44, 16, 0, 0.06) 1px,
+      transparent 0
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    @apply relative overflow-hidden bg-brand-warm/60;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Esconder scrollbar mantendo scroll */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

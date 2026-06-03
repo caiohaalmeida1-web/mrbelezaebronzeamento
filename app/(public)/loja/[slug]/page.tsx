@@ -1,0 +1,266 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, Droplets, ShieldCheck, Sparkles, Truck } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { BotaoAdicionar } from "@/components/loja/botao-adicionar";
+import { ProdutoCard } from "@/components/loja/produto-card";
+import { ScrollReveal } from "@/components/shared/scroll-reveal";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { formatBRL } from "@/lib/utils";
+import type { Produto } from "@/types/database";
+
+export const revalidate = 1800;
+
+interface Props {
+  params: { slug: string };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  try {
+    const supabase = createAdminClient();
+    const { data } = await supabase
+      .from("produtos")
+      .select("nome, descricao")
+      .eq("slug", params.slug)
+      .maybeSingle();
+    if (!data) return { title: "Produto" };
+    return {
+      title: data.nome,
+      description: data.descricao ?? undefined,
+    };
+  } catch {
+    return { title: "Produto" };
+  }
+}
+
+export default async function ProdutoPage({ params }: Props) {
+  const supabase = createClient();
+  const { data: produto } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("slug", params.slug)
+    .eq("ativo", true)
+    .maybeSingle();
+
+  if (!produto) {
+    // tenta usar fallback localmente para ainda exibir a página em dev sem banco
+    if (params.slug === "click-10-tradicional" || params.slug === "click-10-zero") {
+      return <FallbackProduto slug={params.slug} />;
+    }
+    notFound();
+  }
+
+  const { data: similares } = await supabase
+    .from("produtos")
+    .select("*")
+    .eq("ativo", true)
+    .neq("id", produto.id)
+    .limit(3);
+
+  return (
+    <>
+      <section className="bg-brand-cream py-10 sm:py-14">
+        <div className="container-page">
+          <Link
+            href="/loja"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-brand-caramel hover:text-brand-amber"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para a loja
+          </Link>
+
+          <div className="mt-6 grid gap-10 lg:grid-cols-2">
+            <ProdutoVisual produto={produto} />
+            <ProdutoInfo produto={produto} />
+          </div>
+        </div>
+      </section>
+
+      {similares && similares.length > 0 && (
+        <section className="bg-brand-warm py-16 sm:py-20">
+          <div className="container-page">
+            <ScrollReveal>
+              <h2 className="font-display text-3xl font-medium text-brand-brown sm:text-4xl">
+                Você também pode amar
+              </h2>
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {similares.map((s, i) => (
+                  <ProdutoCard key={s.id} produto={s} index={i} />
+                ))}
+              </div>
+            </ScrollReveal>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
+function FallbackProduto({ slug }: { slug: string }) {
+  const dados =
+    slug === "click-10-tradicional"
+      ? {
+          id: "fallback-1",
+          nome: "Click 10 Tradicional",
+          slug: "click-10-tradicional",
+          descricao:
+            "Creme hidratante, ativador e acelerador de bronzeamento. Cor de verão o ano inteiro com hidratação profunda.",
+          descricao_longa:
+            "O Click 10 Tradicional é o nosso creme campeão de vendas. Apresentado em pote de 500g, ele combina três funções essenciais para um bronze impecável: ativador da melanina, acelerador da pigmentação e hidratante de longa duração. Use diariamente após o banho para uma cor de verão que dura o ano todo.",
+          tipo: "fisico" as const,
+          preco: 89.9,
+          preco_original: null,
+          estoque: 50,
+          peso_gramas: 500,
+          imagens: null,
+          arquivo_digital_url: null,
+          stripe_price_id: null,
+          ativo: true,
+          destaque: true,
+          tags: ["Ativador", "Acelerador", "Hidratante"],
+          created_at: new Date().toISOString(),
+        }
+      : {
+          id: "fallback-2",
+          nome: "Click 10 Zero",
+          slug: "click-10-zero",
+          descricao:
+            "Com Vitamina C, Colágeno e DHA. Efeito antioxidante, clareador e firmador. Indicado para peles tipo 3, 4, 5 e 6. Hidratação por até 8h.",
+          descricao_longa:
+            "A versão premium da nossa linha Click 10. Em bisnaga prática de 500ml, o Click 10 Zero combina Vitamina C antioxidante, Colágeno firmador e DHA para realçar e prolongar seu bronze.",
+          tipo: "fisico" as const,
+          preco: 99.9,
+          preco_original: null,
+          estoque: 50,
+          peso_gramas: 500,
+          imagens: null,
+          arquivo_digital_url: null,
+          stripe_price_id: null,
+          ativo: true,
+          destaque: true,
+          tags: ["Vitamina C", "Colágeno", "DHA", "Firmador"],
+          created_at: new Date().toISOString(),
+        };
+
+  return (
+    <section className="bg-brand-cream py-10 sm:py-14">
+      <div className="container-page">
+        <Link
+          href="/loja"
+          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-caramel hover:text-brand-amber"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar para a loja
+        </Link>
+        <div className="mt-6 grid gap-10 lg:grid-cols-2">
+          <ProdutoVisual produto={dados as Produto} />
+          <ProdutoInfo produto={dados as Produto} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProdutoVisual({ produto }: { produto: Produto }) {
+  return (
+    <div className="space-y-3">
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-amber-gradient shadow-2xl shadow-brand-brown/15">
+        <Droplets className="h-32 w-32 text-white/95 drop-shadow-xl" />
+        {produto.destaque && (
+          <Badge variant="sun" className="absolute right-4 top-4">
+            ⭐ Destaque
+          </Badge>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="aspect-square rounded-2xl bg-gradient-to-br from-brand-warm to-brand-cream ring-1 ring-brand-gold/15"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProdutoInfo({ produto }: { produto: Produto }) {
+  return (
+    <div>
+      <p className="label-eyebrow">Linha Click 10</p>
+      <h1 className="mt-3 font-display text-4xl font-medium leading-tight text-brand-brown sm:text-5xl">
+        {produto.nome}
+      </h1>
+
+      {produto.tags && produto.tags.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {produto.tags.map((t) => (
+            <Badge key={t} variant="warm">
+              {t}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-6 flex items-baseline gap-3">
+        <div className="font-display text-4xl font-semibold text-brand-brown">
+          {formatBRL(Number(produto.preco))}
+        </div>
+        {produto.preco_original && (
+          <div className="text-sm text-brand-caramel/60 line-through">
+            {formatBRL(Number(produto.preco_original))}
+          </div>
+        )}
+      </div>
+
+      <p className="mt-5 text-base leading-relaxed text-brand-caramel">
+        {produto.descricao_longa ?? produto.descricao}
+      </p>
+
+      <div className="mt-7">
+        <BotaoAdicionar produto={produto} />
+      </div>
+
+      <div className="mt-7 grid gap-3 sm:grid-cols-3">
+        <Beneficio
+          icon={ShieldCheck}
+          titulo="100% Anvisa"
+          descricao="Produto seguro"
+        />
+        <Beneficio
+          icon={Truck}
+          titulo="Frete BR"
+          descricao="Para todo o Brasil"
+        />
+        <Beneficio
+          icon={Sparkles}
+          titulo="Resultado"
+          descricao="Hidratação 8h"
+        />
+      </div>
+    </div>
+  );
+}
+
+function Beneficio({
+  icon: Icon,
+  titulo,
+  descricao,
+}: {
+  icon: typeof ShieldCheck;
+  titulo: string;
+  descricao: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-white px-3 py-3 text-center ring-1 ring-brand-gold/15">
+      <Icon className="mx-auto h-5 w-5 text-brand-amber" />
+      <div className="mt-1 text-xs font-semibold text-brand-brown">
+        {titulo}
+      </div>
+      <div className="text-[11px] text-brand-caramel">{descricao}</div>
+    </div>
+  );
+}
