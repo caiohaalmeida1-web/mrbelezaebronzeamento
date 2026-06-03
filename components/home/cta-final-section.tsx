@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { MapPin, Phone, Calendar } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { whatsappLink } from "@/lib/utils";
 
@@ -23,13 +22,31 @@ export function CtaFinalSection() {
 
       <ScrollReveal className="container-page relative">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
-          <Logo
-            variant="horizontal-color"
-            width={280}
-            height={80}
-            blend
-            className="mb-8"
-          />
+          <div className="mb-8 flex flex-col items-center gap-1">
+            <span
+              style={{
+                fontFamily: "Dancing Script, cursive",
+                color: "#2C1000",
+                fontSize: "48px",
+                fontWeight: 700,
+                lineHeight: 1,
+              }}
+            >
+              Mércia Regina
+            </span>
+            <span
+              style={{
+                fontFamily: "Inter, sans-serif",
+                color: "#2C1000",
+                fontSize: "13px",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                opacity: 0.6,
+              }}
+            >
+              Beleza e Bronzeamento
+            </span>
+          </div>
 
           <h2
             id="cta-final-heading"

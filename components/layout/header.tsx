@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Menu, Calendar } from "lucide-react";
-import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -45,22 +44,42 @@ export function Header() {
         <Link
           href="/"
           aria-label="Mércia Regina · Início"
-          className="flex items-center gap-3"
+          className="flex items-center gap-2"
         >
-          <Logo
-            variant="round-mono"
-            width={44}
-            height={44}
-            blend
-            rounded={false}
-            priority
-          />
-          <span className="hidden font-display text-lg font-medium leading-none text-brand-brown sm:flex sm:flex-col">
-            Mércia Regina
-            <span className="font-script text-xs leading-tight text-brand-amber">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#F5C200] to-[#E87520]">
+            <span
+              style={{
+                fontFamily: "Dancing Script, cursive",
+                color: "#2C1000",
+                fontSize: "14px",
+                fontWeight: 700,
+              }}
+            >
+              mr
+            </span>
+          </div>
+          <div className="hidden flex-col leading-tight sm:flex">
+            <span
+              style={{
+                fontFamily: "Dancing Script, cursive",
+                color: "#2C1000",
+                fontSize: "16px",
+                fontWeight: 700,
+              }}
+            >
+              Mércia Regina
+            </span>
+            <span
+              style={{
+                fontFamily: "Inter, sans-serif",
+                color: "#E87520",
+                fontSize: "10px",
+                letterSpacing: "0.05em",
+              }}
+            >
               Beleza · Bronzeamento
             </span>
-          </span>
+          </div>
         </Link>
 
         <nav
