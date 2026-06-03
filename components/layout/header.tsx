@@ -125,7 +125,18 @@ export function Header() {
             <SheetContent side="right" className="w-80 p-0">
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-3 border-b border-brand-gold/15 px-6 py-5">
-                  <Logo variant="round-color" size={44} />
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#F5C200] to-[#E87520]">
+                    <span
+                      style={{
+                        fontFamily: "Dancing Script, cursive",
+                        color: "#2C1000",
+                        fontSize: "16px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      mr
+                    </span>
+                  </div>
                   <div>
                     <p className="font-display text-lg font-medium leading-none text-brand-brown">
                       Mércia Regina
