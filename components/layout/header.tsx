@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Menu, Calendar } from "lucide-react";
+import { Menu, Calendar, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,6 +11,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { CarrinhoDrawer } from "@/components/loja/carrinho-drawer";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -23,12 +24,52 @@ const NAV_LINKS = [
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
+  const [conta, setConta] = useState<{ href: string; label: string } | null>(
+    null
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let ativo = true;
+
+    async function carregarConta() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        if (ativo) setConta(null);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (ativo) {
+        setConta(
+          profile?.role === "admin"
+            ? { href: "/admin/dashboard", label: "Painel Admin" }
+            : { href: "/cliente/dashboard", label: "Minha conta" }
+        );
+      }
+    }
+
+    carregarConta();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => carregarConta());
+
+    return () => {
+      ativo = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -102,6 +143,18 @@ export function Header() {
 
           <Button
             asChild
+            variant="ghost"
+            size="sm"
+            className="hidden sm:inline-flex"
+          >
+            <Link href={conta?.href ?? "/login"}>
+              <UserRound className="h-4 w-4" />
+              {conta?.label ?? "Entrar"}
+            </Link>
+          </Button>
+
+          <Button
+            asChild
             size="sm"
             className="hidden sm:inline-flex"
           >
@@ -171,7 +224,10 @@ export function Header() {
                   </SheetClose>
                   <SheetClose asChild>
                     <Button asChild variant="outline" className="w-full">
-                      <Link href="/login">Entrar / Cadastrar</Link>
+                      <Link href={conta?.href ?? "/login"}>
+                        <UserRound className="h-4 w-4" />
+                        {conta?.label ?? "Entrar / Cadastrar"}
+                      </Link>
                     </Button>
                   </SheetClose>
                 </div>

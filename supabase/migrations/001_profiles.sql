@@ -34,15 +34,26 @@ DROP POLICY IF EXISTS "Usuário cria próprio perfil" ON profiles;
 CREATE POLICY "Usuário cria próprio perfil" ON profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
+-- Função SECURITY DEFINER: verifica papel admin sem disparar RLS em profiles
+-- (uma policy de profiles que consulta profiles causa recursão infinita)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM anon;
+
 -- Admin vê todos
 DROP POLICY IF EXISTS "Admin gerencia todos perfis" ON profiles;
 CREATE POLICY "Admin gerencia todos perfis" ON profiles
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM profiles p
-      WHERE p.id = auth.uid() AND p.role = 'admin'
-    )
-  );
+  FOR ALL USING (public.is_admin());
 
 -- Trigger para criar profile automaticamente após signup
 CREATE OR REPLACE FUNCTION handle_new_user()
