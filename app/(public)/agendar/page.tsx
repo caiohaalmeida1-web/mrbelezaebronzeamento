@@ -34,9 +34,10 @@ const FALLBACK_SERVICOS: Servico[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: "fallback-jato",
-    nome: "Bronze a Jato",
-    descricao: "Pulverização profissional com máquina de alta precisão.",
+    id: "fallback-cabine",
+    nome: "Bronze de Cabine",
+    descricao:
+      "Bronzeamento em cabine com conforto e privacidade, sem depender do sol.",
     duracao_minutos: 60,
     preco: 120,
     preco_pacote: null,
@@ -44,6 +45,19 @@ const FALLBACK_SERVICOS: Servico[] = [
     ativo: true,
     imagem_url: null,
     ordem: 2,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "fallback-jato",
+    nome: "Bronze a Jato",
+    descricao: "Pulverização profissional com máquina de alta precisão.",
+    duracao_minutos: 60,
+    preco: 140,
+    preco_pacote: null,
+    quantidade_pacote: null,
+    ativo: true,
+    imagem_url: null,
+    ordem: 3,
     created_at: new Date().toISOString(),
   },
 ];

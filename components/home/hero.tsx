@@ -17,7 +17,7 @@ export function Hero() {
         aria-hidden
         style={{
           background:
-            "radial-gradient(circle at 50% 0%, rgba(255, 240, 180, 0.65) 0%, transparent 60%)",
+            "radial-gradient(circle at 50% 0%, rgba(255, 248, 220, 0.75) 0%, transparent 60%)",
         }}
       />
       <div className="bg-grain pointer-events-none absolute inset-0 opacity-30" aria-hidden />

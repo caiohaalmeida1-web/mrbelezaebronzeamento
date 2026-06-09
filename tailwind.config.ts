@@ -73,7 +73,7 @@ const config: Config = {
       },
       backgroundImage: {
         "hero-gradient":
-          "linear-gradient(170deg, #FFE566 0%, #F5C200 35%, #E07818 72%, #C04400 100%)",
+          "linear-gradient(170deg, #FFF2B0 0%, #FFD84D 35%, #EE8526 72%, #CC5208 100%)",
         "amber-gradient":
           "linear-gradient(135deg, #F5C200 0%, #E87520 60%, #C04400 100%)",
       },

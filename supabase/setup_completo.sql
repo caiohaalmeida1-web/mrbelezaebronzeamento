@@ -143,12 +143,20 @@ VALUES
     1
   ),
   (
-    'Bronze a Jato',
-    'Pulverização profissional com máquina de alta precisão. Resultado imediato em 1 hora — perfeito para eventos. Dura de 7 a 10 dias com os cuidados certos.',
+    'Bronze de Cabine',
+    'Bronzeamento em cabine com conforto e privacidade, sem depender do sol. Cor uniforme o ano inteiro, com técnica profissional e produtos aprovados pela Anvisa.',
     60,
     120.00,
     TRUE,
     2
+  ),
+  (
+    'Bronze a Jato',
+    'Pulverização profissional com máquina de alta precisão. Resultado imediato em 1 hora — perfeito para eventos. Dura de 7 a 10 dias com os cuidados certos.',
+    60,
+    140.00,
+    TRUE,
+    3
   )
 ON CONFLICT DO NOTHING;
 

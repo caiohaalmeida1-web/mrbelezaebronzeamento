@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   Calendar,
+  Camera,
   DollarSign,
   FileText,
   Gift,
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/admin/clientes", label: "Clientes", icon: Users },
   { href: "/admin/produtos", label: "Produtos", icon: Package },
   { href: "/admin/blog", label: "Blog", icon: FileText },
+  { href: "/admin/galeria", label: "Galeria", icon: Camera },
   { href: "/admin/fidelidade", label: "Fidelidade", icon: Gift },
   { href: "/admin/financeiro", label: "Financeiro", icon: DollarSign },
 ];

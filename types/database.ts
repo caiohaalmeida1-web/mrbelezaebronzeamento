@@ -152,6 +152,16 @@ export interface Avaliacao {
   created_at: string;
 }
 
+export interface GaleriaFoto {
+  id: string;
+  titulo: string | null;
+  imagem_url: string;
+  storage_path: string | null;
+  ordem: number;
+  ativo: boolean;
+  created_at: string;
+}
+
 export interface BlogPost {
   id: string;
   titulo: string;

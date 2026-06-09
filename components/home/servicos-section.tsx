@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sun, Wind, ArrowRight } from "lucide-react";
+import { Sun, Wind, Zap, ArrowRight } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,13 +17,23 @@ const SERVICOS = [
   },
   {
     numero: "02",
+    icon: Zap,
+    nome: "Bronze de Cabine",
+    descricao:
+      "Bronzeamento em cabine com conforto e privacidade, sem depender do sol. Cor uniforme o ano inteiro, com técnica profissional e produtos aprovados pela Anvisa.",
+    tag: "Sem depender do sol",
+    duracao: "60 min",
+    preco: "R$ 120",
+  },
+  {
+    numero: "03",
     icon: Wind,
     nome: "Bronze a Jato",
     descricao:
       "Pulverização profissional com máquina de alta precisão. Resultado imediato em 1 hora — perfeito para eventos. Dura de 7 a 10 dias com os cuidados certos.",
     tag: "Resultado em 1h",
     duracao: "60 min",
-    preco: "R$ 120",
+    preco: "R$ 140",
   },
 ] as const;
 
@@ -44,12 +54,12 @@ export function ServicosSection() {
             Escolha o seu <em className="italic">bronze</em>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-brand-caramel sm:text-lg">
-            Duas técnicas, o mesmo cuidado: pele saudável, marquinhas perfeitas
+            Três técnicas, o mesmo cuidado: pele saudável, marquinhas perfeitas
             e cor que dura. Você escolhe a que combina com o seu momento.
           </p>
         </ScrollReveal>
 
-        <div className="mt-14 grid gap-6 sm:gap-8 md:grid-cols-2">
+        <div className="mt-14 grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
           {SERVICOS.map((s, i) => (
             <ScrollReveal key={s.nome} delay={i * 100}>
               <article className="group card-brand relative flex h-full flex-col overflow-hidden p-8 sm:p-10">

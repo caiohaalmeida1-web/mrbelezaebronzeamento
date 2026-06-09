@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Sun, Wind, Clock, Sparkles, ShieldCheck } from "lucide-react";
+import { Sun, Wind, Zap, Clock, Sparkles, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
@@ -34,9 +34,10 @@ const FALLBACK: Servico[] = [
     created_at: new Date().toISOString(),
   },
   {
-    id: "fallback-jato",
-    nome: "Bronze a Jato",
-    descricao: "Pulverização profissional com máquina de alta precisão.",
+    id: "fallback-cabine",
+    nome: "Bronze de Cabine",
+    descricao:
+      "Bronzeamento em cabine com conforto e privacidade, sem depender do sol.",
     duracao_minutos: 60,
     preco: 120,
     preco_pacote: null,
@@ -44,6 +45,19 @@ const FALLBACK: Servico[] = [
     ativo: true,
     imagem_url: null,
     ordem: 2,
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "fallback-jato",
+    nome: "Bronze a Jato",
+    descricao: "Pulverização profissional com máquina de alta precisão.",
+    duracao_minutos: 60,
+    preco: 140,
+    preco_pacote: null,
+    quantidade_pacote: null,
+    ativo: true,
+    imagem_url: null,
+    ordem: 3,
     created_at: new Date().toISOString(),
   },
 ];
@@ -58,7 +72,7 @@ export default async function ServicosPage() {
 
   const servicos = data && data.length > 0 ? data : FALLBACK;
 
-  const ICONS = [Sun, Wind] as const;
+  const ICONS = [Sun, Zap, Wind] as const;
   const HIGHLIGHTS = [
     {
       icon: ShieldCheck,
@@ -88,7 +102,7 @@ export default async function ServicosPage() {
             Serviços
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-brand-brown/80 sm:text-lg">
-            Duas técnicas, o mesmo cuidado: pele saudável, marquinhas perfeitas
+            Três técnicas, o mesmo cuidado: pele saudável, marquinhas perfeitas
             e cor que dura.
           </p>
         </div>
@@ -96,7 +110,7 @@ export default async function ServicosPage() {
 
       <section className="bg-brand-cream py-20 sm:py-24">
         <div className="container-page">
-          <div className="grid gap-6 sm:gap-8 md:grid-cols-2">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
             {servicos.map((s, i) => {
               const Icon = ICONS[i % ICONS.length];
               return (
