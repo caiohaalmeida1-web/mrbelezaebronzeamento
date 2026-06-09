@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Search, Users } from "lucide-react";
+import { Search, ShieldCheck, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/server";
@@ -16,6 +16,7 @@ export default async function AdminClientes({ searchParams }: Props) {
   let query = supabase
     .from("profiles")
     .select("id, full_name, email, phone, pontos, total_sessoes, role, created_at")
+    .eq("role", "cliente")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -23,7 +24,14 @@ export default async function AdminClientes({ searchParams }: Props) {
     query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`);
   }
 
-  const { data: clientes } = await query;
+  const [{ data: clientes }, { data: admins }] = await Promise.all([
+    query,
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, created_at")
+      .eq("role", "admin")
+      .order("created_at", { ascending: true }),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -61,7 +69,6 @@ export default async function AdminClientes({ searchParams }: Props) {
                 <th className="px-5 py-3">Sessões</th>
                 <th className="px-5 py-3">Pontos</th>
                 <th className="px-5 py-3">Cadastro</th>
-                <th className="px-5 py-3">Tipo</th>
               </tr>
             </thead>
             <tbody>
@@ -95,16 +102,43 @@ export default async function AdminClientes({ searchParams }: Props) {
                   <td className="px-5 py-3 text-xs text-brand-caramel">
                     {format(new Date(c.created_at), "dd/MM/yy")}
                   </td>
-                  <td className="px-5 py-3">
-                    <Badge variant={c.role === "admin" ? "default" : "outline"}>
-                      {c.role}
-                    </Badge>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {admins && admins.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 font-display text-2xl font-medium text-brand-brown">
+            <ShieldCheck className="h-5 w-5 text-brand-amber" />
+            Administradores
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {admins.map((a) => (
+              <div
+                key={a.id}
+                className="card-brand flex items-center gap-3 p-4"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-brown text-xs font-bold text-brand-sun">
+                  {getInitials(a.full_name)}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-semibold text-brand-brown">
+                      {a.full_name}
+                    </span>
+                    <Badge variant="default">admin</Badge>
+                  </div>
+                  <div className="truncate text-xs text-brand-caramel">
+                    {a.email}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

@@ -38,6 +38,7 @@ export default async function AdminDashboard() {
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
+      .eq("role", "cliente")
       .gte("created_at", inicioMes),
     supabase
       .from("produtos")

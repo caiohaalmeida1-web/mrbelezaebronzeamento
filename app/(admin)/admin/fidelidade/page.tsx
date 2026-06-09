@@ -10,6 +10,7 @@ export default async function AdminFidelidade() {
     supabase
       .from("profiles")
       .select("id, full_name, pontos, total_sessoes")
+      .eq("role", "cliente")
       .order("pontos", { ascending: false })
       .limit(20),
     supabase
