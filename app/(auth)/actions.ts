@@ -32,12 +32,25 @@ export async function login(
   if (!parsed.success) return { ok: false, message: "Dados inválidos." };
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
     return { ok: false, message: "E-mail ou senha incorretos." };
   }
 
-  const next = (formData.get("next") as string | null) || "/cliente/dashboard";
+  let next = formData.get("next") as string | null;
+
+  if (!next) {
+    // Admin vai direto para o painel; cliente para a área pessoal
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    next =
+      profile?.role === "admin" ? "/admin/dashboard" : "/cliente/dashboard";
+  }
+
   redirect(next);
 }
 
