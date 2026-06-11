@@ -10,6 +10,9 @@ import { createClient } from "@/lib/supabase/client";
 import type { GaleriaFoto } from "@/types/database";
 import { alternarFoto, excluirFoto, registrarFoto } from "./actions";
 
+const MAX_IMAGEM_MB = 5;
+const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"];
+
 export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -26,9 +29,17 @@ export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
     const supabase = createClient();
 
     for (const file of Array.from(files)) {
+      if (!TIPOS_IMAGEM.includes(file.type)) {
+        setErro(`"${file.name}" não é JPG, PNG ou WebP.`);
+        continue;
+      }
+      if (file.size > MAX_IMAGEM_MB * 1024 * 1024) {
+        setErro(`"${file.name}" passa de ${MAX_IMAGEM_MB}MB.`);
+        continue;
+      }
+
       const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const titulo = file.name.replace(/\.[^.]+$/, "");
 
       const { error: uploadError } = await supabase.storage
         .from("galeria")
@@ -39,7 +50,8 @@ export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
         continue;
       }
 
-      const res = await registrarFoto({ titulo, storagePath: path });
+      // Sem título por padrão — nome de arquivo não deve aparecer no site
+      const res = await registrarFoto({ titulo: null, storagePath: path });
       if (!res.ok) setErro(res.erro ?? "Erro ao registrar a foto.");
     }
 

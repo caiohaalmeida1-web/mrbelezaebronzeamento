@@ -39,6 +39,7 @@ export async function updateSession(request: NextRequest) {
 
   const isClientArea = pathname.startsWith("/cliente");
   const isAdminArea = pathname.startsWith("/admin");
+  const isAuthPage = pathname === "/login" || pathname === "/cadastro";
 
   if ((isClientArea || isAdminArea) && !user) {
     const url = request.nextUrl.clone();
@@ -47,14 +48,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isAdminArea && user) {
+  if ((isAdminArea || isAuthPage) && user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .maybeSingle<{ role: string }>();
 
-    if (!profile || profile.role !== "admin") {
+    const isAdmin = profile?.role === "admin";
+
+    // Usuária já logada não deve ver login/cadastro
+    if (isAuthPage) {
+      const url = request.nextUrl.clone();
+      url.pathname = isAdmin ? "/admin/dashboard" : "/cliente/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+
+    if (!isAdmin) {
       const url = request.nextUrl.clone();
       url.pathname = "/cliente/dashboard";
       return NextResponse.redirect(url);

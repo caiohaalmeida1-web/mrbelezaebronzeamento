@@ -2,14 +2,14 @@ import { Check } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
 
 const CHECKLIST = [
-  "Pele limpa (venha após o banho)",
+  "Pele limpa: venha logo após o banho",
   "2 toalhas de banho",
   "1 toalha de rosto",
-  "Vir alimentada",
-  "Protetor solar",
+  "Venha bem alimentada",
+  "Protetor solar facial",
   "Garrafa de água",
   "Cabelo preso",
-  "Horário agendado",
+  "Chegue no horário agendado",
 ] as const;
 
 export function ChecklistSection() {

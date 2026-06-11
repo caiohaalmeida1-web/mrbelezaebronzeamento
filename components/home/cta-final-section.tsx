@@ -23,27 +23,10 @@ export function CtaFinalSection() {
       <ScrollReveal className="container-page relative">
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
           <div className="mb-8 flex flex-col items-center gap-1">
-            <span
-              style={{
-                fontFamily: "Dancing Script, cursive",
-                color: "#2C1000",
-                fontSize: "48px",
-                fontWeight: 700,
-                lineHeight: 1,
-              }}
-            >
+            <span className="font-script text-5xl font-bold leading-none text-brand-brown">
               Mércia Regina
             </span>
-            <span
-              style={{
-                fontFamily: "Inter, sans-serif",
-                color: "#2C1000",
-                fontSize: "13px",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                opacity: 0.6,
-              }}
-            >
+            <span className="font-sans text-[13px] uppercase tracking-[0.2em] text-brand-brown/60">
               Beleza e Bronzeamento
             </span>
           </div>

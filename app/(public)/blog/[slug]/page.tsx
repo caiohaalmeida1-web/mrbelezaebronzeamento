@@ -9,7 +9,7 @@ import {
   BreadcrumbSchema,
 } from "@/components/shared/structured-data";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SITE_CONFIG, formatDateBR } from "@/lib/utils";
 
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function PostPage({ params }: Props) {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const { data: post } = await supabase
     .from("blog_posts")
     .select("*")

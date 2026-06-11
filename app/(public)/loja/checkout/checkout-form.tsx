@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2, ShoppingBag } from "lucide-react";
+import { CreditCard, Loader2, ShieldCheck, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  StripePaymentForm,
+  isStripeConfigured,
+} from "@/components/shared/stripe-payment-form";
 import { useCarrinho } from "@/hooks/use-carrinho";
 import { formatBRL } from "@/lib/utils";
 import { finalizarPedido } from "./actions";
@@ -31,8 +35,40 @@ export function CheckoutForm({ perfil }: Props) {
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
   const [carregando, setCarregando] = useState(false);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [totalPedido, setTotalPedido] = useState(0);
 
   const temFisico = itens.some((i) => i.tipo === "fisico");
+
+  // Etapa de pagamento: pedido criado, aguardando cartão
+  if (clientSecret) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <div className="card-brand p-6 sm:p-8">
+          <h2 className="flex items-center gap-2 font-display text-2xl text-brand-brown">
+            <CreditCard className="h-5 w-5 text-brand-amber" />
+            Pagamento
+          </h2>
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-brand-warm/60 px-4 py-3 text-sm text-brand-caramel">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            Pagamento processado com segurança via Stripe.
+          </div>
+          <div className="mt-5">
+            <StripePaymentForm
+              clientSecret={clientSecret}
+              valor={totalPedido}
+              returnPath="/cliente/compras"
+              onSuccess={() => {
+                toast.success("Pagamento aprovado! Obrigada pela compra.");
+                limpar();
+                setTimeout(() => router.push("/cliente/compras"), 1200);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (itens.length === 0) {
     return (
@@ -81,9 +117,16 @@ export function CheckoutForm({ perfil }: Props) {
         return;
       }
 
-      toast.success("Pedido criado! Redirecionando para o pagamento…");
+      if (result.clientSecret && isStripeConfigured()) {
+        // Vai para a etapa de pagamento com Stripe Elements
+        setTotalPedido(total);
+        setClientSecret(result.clientSecret);
+        return;
+      }
+
+      // Fallback de desenvolvimento (Stripe não configurado)
+      toast.success("Pedido criado! Você poderá pagar na entrega ou via WhatsApp.");
       limpar();
-      // Em produção, integrar Stripe Elements aqui usando result.clientSecret
       setTimeout(() => router.push("/cliente/compras"), 1200);
     } catch {
       toast.error("Erro inesperado.");

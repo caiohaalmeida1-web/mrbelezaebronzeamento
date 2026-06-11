@@ -88,36 +88,15 @@ export function Header() {
           className="flex items-center gap-2"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#F5C200] to-[#E87520]">
-            <span
-              style={{
-                fontFamily: "Dancing Script, cursive",
-                color: "#2C1000",
-                fontSize: "14px",
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-script text-[14px] font-bold text-brand-brown">
               mr
             </span>
           </div>
           <div className="hidden flex-col leading-tight sm:flex">
-            <span
-              style={{
-                fontFamily: "Dancing Script, cursive",
-                color: "#2C1000",
-                fontSize: "16px",
-                fontWeight: 700,
-              }}
-            >
+            <span className="font-script text-base font-bold text-brand-brown">
               Mércia Regina
             </span>
-            <span
-              style={{
-                fontFamily: "Inter, sans-serif",
-                color: "#E87520",
-                fontSize: "10px",
-                letterSpacing: "0.05em",
-              }}
-            >
+            <span className="font-sans text-[10px] tracking-[0.05em] text-brand-amber">
               Beleza · Bronzeamento
             </span>
           </div>
@@ -179,14 +158,7 @@ export function Header() {
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-3 border-b border-brand-gold/15 px-6 py-5">
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#F5C200] to-[#E87520]">
-                    <span
-                      style={{
-                        fontFamily: "Dancing Script, cursive",
-                        color: "#2C1000",
-                        fontSize: "16px",
-                        fontWeight: 700,
-                      }}
-                    >
+                    <span className="font-script text-base font-bold text-brand-brown">
                       mr
                     </span>
                   </div>

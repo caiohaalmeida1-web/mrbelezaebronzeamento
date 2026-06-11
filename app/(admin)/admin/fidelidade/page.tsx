@@ -1,8 +1,9 @@
 import { format } from "date-fns";
-import { Award } from "lucide-react";
+import { Award, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { getInitials } from "@/lib/utils";
+import { ResgatarBotao } from "./resgatar-botao";
 
 export default async function AdminFidelidade() {
   const supabase = createClient();
@@ -29,6 +30,18 @@ export default async function AdminFidelidade() {
         </h1>
       </header>
 
+      <div className="card-brand flex items-start gap-3 bg-amber-50 p-5 ring-1 ring-amber-200">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+        <div className="text-sm text-amber-900">
+          <strong>Regras do programa:</strong> a cliente ganha{" "}
+          <strong>1 ponto por R$1 efetivamente pago</strong> em sessões
+          concluídas. <strong>500 pontos = R$30 de desconto</strong> (resgate
+          feito por você aqui, na hora de cobrar). O desconto automático de 20%
+          da 5ª sessão <strong>não acumula</strong> com o resgate de pontos —
+          vale o melhor para a cliente.
+        </div>
+      </div>
+
       <section>
         <h2 className="font-display text-2xl text-brand-brown">
           Top clientes
@@ -41,6 +54,7 @@ export default async function AdminFidelidade() {
                 <th className="px-5 py-3">Cliente</th>
                 <th className="px-5 py-3">Sessões</th>
                 <th className="px-5 py-3">Pontos</th>
+                <th className="px-5 py-3 text-right">Resgate</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +76,15 @@ export default async function AdminFidelidade() {
                   <td className="px-5 py-3">{c.total_sessoes}</td>
                   <td className="px-5 py-3">
                     <Badge variant="warm">{c.pontos} pts</Badge>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    {c.pontos >= 500 ? (
+                      <ResgatarBotao clienteId={c.id} nome={c.full_name} />
+                    ) : (
+                      <span className="text-xs text-brand-caramel/60">
+                        faltam {500 - c.pontos} pts
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))}

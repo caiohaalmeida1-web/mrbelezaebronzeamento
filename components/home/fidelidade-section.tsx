@@ -8,19 +8,19 @@ const PILARES = [
     icon: Award,
     titulo: "Ganhe pontos",
     descricao:
-      "100 pontos a cada sessão concluída. Os pontos caem automaticamente na sua conta.",
+      "1 ponto a cada R$1 pago em sessões concluídas. Os pontos caem automaticamente na sua conta.",
   },
   {
     icon: Star,
-    titulo: "Acumule",
+    titulo: "Acumule e troque",
     descricao:
-      "500 pontos viram R$30 de desconto. Ou guarde para resgatar uma sessão inteira.",
+      "500 pontos viram R$30 de desconto na sua próxima sessão. É só pedir na recepção.",
   },
   {
     icon: Gift,
-    titulo: "Resgate descontos",
+    titulo: "5ª sessão com 20% off",
     descricao:
-      "Toda 5ª sessão você ganha 20% de desconto automático. Sem complicação.",
+      "Na 5ª sessão o desconto de 20% é automático. Os benefícios não acumulam — vale sempre o melhor para você.",
   },
 ] as const;
 
@@ -53,8 +53,9 @@ export function FidelidadeSection() {
             Sua autoestima merece <em className="italic">recompensa</em>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-brand-brown/80 sm:text-lg">
-            Cada sessão que você faz vira ponto. Cada ponto vira desconto.
-            E na 5ª sessão, 20% off automático — sem precisar pedir.
+            Cada real que você investe no seu bronze vira ponto. Cada ponto
+            vira desconto. E na 5ª sessão, 20% off automático — sem precisar
+            pedir.
           </p>
         </ScrollReveal>
 

@@ -13,6 +13,9 @@ import { slugify } from "@/lib/utils";
 import type { BlogPost } from "@/types/database";
 import { excluirPost, salvarPost } from "./actions";
 
+const MAX_IMAGEM_MB = 5;
+const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"];
+
 export function PostForm({ post }: { post?: BlogPost }) {
   const router = useRouter();
   const capaInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +47,16 @@ export function PostForm({ post }: { post?: BlogPost }) {
 
   async function handleUploadCapa(file: File | undefined) {
     if (!file) return;
+
+    if (!TIPOS_IMAGEM.includes(file.type)) {
+      setErro("Envie apenas imagens JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > MAX_IMAGEM_MB * 1024 * 1024) {
+      setErro(`Imagem muito grande. Máximo ${MAX_IMAGEM_MB}MB.`);
+      return;
+    }
+
     setEnviandoCapa(true);
     setErro(null);
 

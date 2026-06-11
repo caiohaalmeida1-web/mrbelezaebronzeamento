@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import { formatDateBR } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function BlogPage() {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const { data: posts } = await supabase
     .from("blog_posts")
     .select("id, titulo, slug, resumo, publicado_em, tags")

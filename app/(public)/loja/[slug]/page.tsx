@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BotaoAdicionar } from "@/components/loja/botao-adicionar";
 import { ProdutoCard } from "@/components/loja/produto-card";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatBRL } from "@/lib/utils";
 import type { Produto } from "@/types/database";
@@ -16,6 +16,20 @@ export const revalidate = 1800;
 
 interface Props {
   params: { slug: string };
+}
+
+export async function generateStaticParams() {
+  try {
+    const supabase = createStaticClient();
+    const { data } = await supabase
+      .from("produtos")
+      .select("slug")
+      .eq("ativo", true)
+      .eq("disponivel_venda", true);
+    return (data ?? []).map((p: { slug: string }) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -37,19 +51,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProdutoPage({ params }: Props) {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const { data: produto } = await supabase
     .from("produtos")
     .select("*")
     .eq("slug", params.slug)
     .eq("ativo", true)
+    .eq("disponivel_venda", true)
     .maybeSingle();
 
   if (!produto) {
-    // tenta usar fallback localmente para ainda exibir a página em dev sem banco
-    if (params.slug === "click-10-tradicional" || params.slug === "click-10-zero") {
-      return <FallbackProduto slug={params.slug} />;
-    }
     notFound();
   }
 
@@ -57,6 +68,7 @@ export default async function ProdutoPage({ params }: Props) {
     .from("produtos")
     .select("*")
     .eq("ativo", true)
+    .eq("disponivel_venda", true)
     .neq("id", produto.id)
     .limit(3);
 
@@ -99,71 +111,6 @@ export default async function ProdutoPage({ params }: Props) {
   );
 }
 
-function FallbackProduto({ slug }: { slug: string }) {
-  const dados =
-    slug === "click-10-tradicional"
-      ? {
-          id: "fallback-1",
-          nome: "Click 10 Tradicional",
-          slug: "click-10-tradicional",
-          descricao:
-            "Creme hidratante, ativador e acelerador de bronzeamento. Cor de verão o ano inteiro com hidratação profunda.",
-          descricao_longa:
-            "O Click 10 Tradicional é o nosso creme campeão de vendas. Apresentado em pote de 500g, ele combina três funções essenciais para um bronze impecável: ativador da melanina, acelerador da pigmentação e hidratante de longa duração. Use diariamente após o banho para uma cor de verão que dura o ano todo.",
-          tipo: "fisico" as const,
-          preco: 89.9,
-          preco_original: null,
-          estoque: 50,
-          peso_gramas: 500,
-          imagens: null,
-          arquivo_digital_url: null,
-          stripe_price_id: null,
-          ativo: true,
-          destaque: true,
-          tags: ["Ativador", "Acelerador", "Hidratante"],
-          created_at: new Date().toISOString(),
-        }
-      : {
-          id: "fallback-2",
-          nome: "Click 10 Zero",
-          slug: "click-10-zero",
-          descricao:
-            "Com Vitamina C, Colágeno e DHA. Efeito antioxidante, clareador e firmador. Indicado para peles tipo 3, 4, 5 e 6. Hidratação por até 8h.",
-          descricao_longa:
-            "A versão premium da nossa linha Click 10. Em bisnaga prática de 500ml, o Click 10 Zero combina Vitamina C antioxidante, Colágeno firmador e DHA para realçar e prolongar seu bronze.",
-          tipo: "fisico" as const,
-          preco: 99.9,
-          preco_original: null,
-          estoque: 50,
-          peso_gramas: 500,
-          imagens: null,
-          arquivo_digital_url: null,
-          stripe_price_id: null,
-          ativo: true,
-          destaque: true,
-          tags: ["Vitamina C", "Colágeno", "DHA", "Firmador"],
-          created_at: new Date().toISOString(),
-        };
-
-  return (
-    <section className="bg-brand-cream py-10 sm:py-14">
-      <div className="container-page">
-        <Link
-          href="/loja"
-          className="inline-flex items-center gap-1 text-sm font-semibold text-brand-caramel hover:text-brand-amber"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar para a loja
-        </Link>
-        <div className="mt-6 grid gap-10 lg:grid-cols-2">
-          <ProdutoVisual produto={dados as Produto} />
-          <ProdutoInfo produto={dados as Produto} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function ProdutoVisual({ produto }: { produto: Produto }) {
   return (
     <div className="space-y-3">
@@ -190,7 +137,7 @@ function ProdutoVisual({ produto }: { produto: Produto }) {
 function ProdutoInfo({ produto }: { produto: Produto }) {
   return (
     <div>
-      <p className="label-eyebrow">Linha Click 10</p>
+      <p className="label-eyebrow">Loja Mércia Regina</p>
       <h1 className="mt-3 font-display text-4xl font-medium leading-tight text-brand-brown sm:text-5xl">
         {produto.nome}
       </h1>

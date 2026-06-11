@@ -49,7 +49,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-brand-warm">
+    <div className="min-h-screen bg-gradient-to-br from-[#FAF7F1] via-[#F6F1E8] to-[#F1EADC]">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-brand-gold/15 bg-brand-brown text-brand-cream lg:flex">
         <Link
           href="/"

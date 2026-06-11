@@ -15,6 +15,19 @@ const STATUS_VAR: Record<string, BadgeProps["variant"]> = {
   reembolsado: "outline",
 };
 
+interface PedidoComItens {
+  id: string;
+  status: string;
+  valor_total: number;
+  created_at: string;
+  pedido_itens:
+    | {
+        quantidade: number;
+        produtos: { nome: string; slug: string } | null;
+      }[]
+    | null;
+}
+
 export default async function ComprasPage() {
   const supabase = createClient();
   const {
@@ -28,7 +41,8 @@ export default async function ComprasPage() {
       "id, status, valor_total, created_at, pedido_itens(quantidade, produtos(nome, slug))"
     )
     .eq("cliente_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .returns<PedidoComItens[]>();
 
   return (
     <div className="space-y-8">
@@ -73,7 +87,7 @@ export default async function ComprasPage() {
                     {format(new Date(p.created_at), "dd/MM/yyyy 'às' HH:mm")}
                   </p>
                   <ul className="mt-3 space-y-0.5 text-sm text-brand-brown">
-                    {p.pedido_itens?.map((it: any, i: number) => (
+                    {p.pedido_itens?.map((it, i) => (
                       <li key={i}>
                         <strong>{it.quantidade}×</strong>{" "}
                         {it.produtos?.nome ?? "Produto"}

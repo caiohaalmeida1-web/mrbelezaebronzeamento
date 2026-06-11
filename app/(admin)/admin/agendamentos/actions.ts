@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export async function marcarConcluido(agendamentoId: string) {
+/** Retorna o client autenticado se o usuário logado for admin. */
+async function clientAdmin() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
+  if (!user) return null;
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -16,7 +17,12 @@ export async function marcarConcluido(agendamentoId: string) {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") return { ok: false };
+  return profile?.role === "admin" ? supabase : null;
+}
+
+export async function marcarConcluido(agendamentoId: string) {
+  const supabase = await clientAdmin();
+  if (!supabase) return { ok: false };
 
   await supabase
     .from("agendamentos")
@@ -29,7 +35,9 @@ export async function marcarConcluido(agendamentoId: string) {
 }
 
 export async function marcarNoShow(agendamentoId: string) {
-  const supabase = createClient();
+  const supabase = await clientAdmin();
+  if (!supabase) return { ok: false };
+
   await supabase
     .from("agendamentos")
     .update({ status: "no_show" })

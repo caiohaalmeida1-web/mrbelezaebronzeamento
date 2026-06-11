@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -13,6 +13,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  StripePaymentForm,
+  isStripeConfigured,
+} from "@/components/shared/stripe-payment-form";
 import { formatBRL } from "@/lib/utils";
 import type { Servico } from "@/types/database";
 
@@ -35,46 +39,22 @@ export function StepPagamento({
 }: Props) {
   const valor = valorBase - desconto;
   const dataHora = new Date(dataHoraISO);
-  const [stripeReady, setStripeReady] = useState(false);
+  const stripeAtivo = Boolean(clientSecret) && isStripeConfigured();
   const [carregando, setCarregando] = useState(false);
   const [confirmado, setConfirmado] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (clientSecret) setStripeReady(true);
-  }, [clientSecret]);
 
   /**
-   * Em produção, integrar @stripe/react-stripe-js com Elements
-   * usando o client_secret. Aqui mantemos um fallback simulado
-   * quando STRIPE não estiver configurado, para garantir que o
-   * fluxo end-to-end funcione em desenvolvimento.
+   * Fallback apenas para desenvolvimento: quando o Stripe não está
+   * configurado, confirma direto para permitir testar o fluxo completo.
+   * Em produção (chaves configuradas) o pagamento real é feito via
+   * StripePaymentForm e a confirmação definitiva vem do webhook.
    */
-  async function pagar() {
-    if (!clientSecret) {
-      // Modo dev sem Stripe → confirma direto
-      setCarregando(true);
-      await new Promise((r) => setTimeout(r, 700));
-      setConfirmado(true);
-      setCarregando(false);
-      onPaid();
-      return;
-    }
-
+  async function pagarSemStripe() {
     setCarregando(true);
-    setErro(null);
-    try {
-      // Implementação completa em /lib/stripe-elements.ts
-      // Por hora, simula sucesso com confirmação manual
-      // TODO: integrar Stripe Elements completo no client
-      await new Promise((r) => setTimeout(r, 900));
-      setConfirmado(true);
-      onPaid();
-    } catch {
-      setErro("Não foi possível processar o pagamento.");
-    } finally {
-      setCarregando(false);
-    }
+    await new Promise((r) => setTimeout(r, 700));
+    setConfirmado(true);
+    setCarregando(false);
+    onPaid();
   }
 
   if (confirmado) {
@@ -164,7 +144,7 @@ export function StepPagamento({
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
             Pagamento processado com segurança via Stripe.
           </div>
-          {!stripeReady && (
+          {!stripeAtivo && (
             <div className="rounded-2xl bg-amber-50 px-4 py-3 text-amber-900 ring-1 ring-amber-200">
               Modo de demonstração: a integração Stripe completa será ativada
               quando as chaves forem configuradas em produção.
@@ -172,25 +152,33 @@ export function StepPagamento({
           )}
         </div>
 
-        <Button
-          onClick={pagar}
-          disabled={carregando}
-          size="lg"
-          className="mt-5 w-full"
-        >
-          {carregando ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+        <div className="mt-5">
+          {stripeAtivo && clientSecret ? (
+            <StripePaymentForm
+              clientSecret={clientSecret}
+              valor={valor}
+              returnPath="/cliente/agendamentos"
+              onSuccess={() => {
+                setConfirmado(true);
+                onPaid();
+              }}
+            />
           ) : (
-            <CreditCard className="h-4 w-4" />
+            <Button
+              onClick={pagarSemStripe}
+              disabled={carregando}
+              size="lg"
+              className="w-full"
+            >
+              {carregando ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CreditCard className="h-4 w-4" />
+              )}
+              {carregando ? "Processando…" : `Pagar ${formatBRL(valor)}`}
+            </Button>
           )}
-          {carregando ? "Processando…" : `Pagar ${formatBRL(valor)}`}
-        </Button>
-
-        {erro && (
-          <p className="mt-3 text-sm text-red-600" role="alert">
-            {erro}
-          </p>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Quote, Sun } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import type { GaleriaFoto } from "@/types/database";
 
 /**
@@ -39,7 +39,7 @@ const GALERIA = [
 const SPANS = ["row-span-2 col-span-2", "", "", "", ""];
 
 export async function GaleriaSection() {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("galeria_fotos")
     .select("*")

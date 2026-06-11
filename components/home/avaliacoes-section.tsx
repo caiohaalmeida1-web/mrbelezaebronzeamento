@@ -1,6 +1,6 @@
 import { Star } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import { getInitials } from "@/lib/utils";
 import type { Avaliacao, Profile } from "@/types/database";
 
@@ -36,7 +36,7 @@ const FALLBACK: AvaliacaoComCliente[] = [
 ];
 
 export async function AvaliacoesSection() {
-  const supabase = createClient();
+  const supabase = createStaticClient();
 
   const { data } = await supabase
     .from("avaliacoes")

@@ -67,12 +67,35 @@ export default async function PontosPage() {
         </div>
       </section>
 
+      <section className="card-brand p-5 text-sm text-brand-caramel">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-brand-caramel">
+          Como funciona
+        </h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>
+            Você ganha <strong>1 ponto a cada R$1 pago</strong> em sessões
+            concluídas.
+          </li>
+          <li>
+            <strong>500 pontos valem R$30 de desconto</strong> — peça o resgate
+            na recepção ao agendar ou pagar.
+          </li>
+          <li>
+            Na <strong>5ª sessão o desconto de 20% é automático</strong>.
+          </li>
+          <li>
+            Os benefícios não acumulam na mesma sessão — vale sempre o melhor
+            para você.
+          </li>
+        </ul>
+      </section>
+
       <section>
         <h2 className="font-display text-2xl text-brand-brown">Histórico</h2>
         {!transacoes || transacoes.length === 0 ? (
           <div className="card-brand mt-4 p-8 text-center text-brand-caramel">
             Nenhuma transação ainda. Que tal agendar sua primeira sessão e
-            ganhar 100 pontos?
+            começar a pontuar?
           </div>
         ) : (
           <ul className="mt-4 divide-y divide-brand-gold/10 rounded-2xl bg-white shadow-sm ring-1 ring-brand-gold/10">

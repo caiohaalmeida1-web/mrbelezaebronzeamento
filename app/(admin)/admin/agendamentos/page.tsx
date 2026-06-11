@@ -1,24 +1,43 @@
-import { format, addDays } from "date-fns";
+import { format, addDays, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar } from "lucide-react";
+import { Calendar, CalendarDays } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/utils";
 import { MarcarConcluidoBotao } from "./marcar-concluido";
+import { AgendaSemanal } from "./agenda-semanal";
 
 export default async function AdminAgendamentos() {
   const supabase = createClient();
   const inicio = new Date().toISOString();
+  const inicioSemana = startOfDay(new Date()).toISOString();
   const fim = addDays(new Date(), 14).toISOString();
 
-  const { data: agendamentos } = await supabase
-    .from("agendamentos")
-    .select(
-      "id, data_hora, status, valor_pago, observacoes, profiles(full_name, phone, email), servicos(nome)"
-    )
-    .gte("data_hora", inicio)
-    .lte("data_hora", fim)
-    .order("data_hora");
+  const [{ data: agendamentos }, { data: horariosConfig }] = await Promise.all([
+    supabase
+      .from("agendamentos")
+      .select(
+        "id, data_hora, status, valor_pago, observacoes, profiles(full_name, phone, email), servicos(nome)"
+      )
+      .gte("data_hora", inicioSemana)
+      .lte("data_hora", fim)
+      .order("data_hora"),
+    supabase
+      .from("horarios_config")
+      .select("dia_semana, hora_inicio, hora_fim, ativo"),
+  ]);
+
+  const slotsSemana = (agendamentos ?? [])
+    .filter((a) => ["pendente", "confirmado", "concluido"].includes(a.status))
+    .map((a) => ({
+      id: a.id,
+      data_hora: a.data_hora,
+      status: a.status,
+      // @ts-expect-error rel
+      cliente: (a.profiles?.full_name as string | undefined) ?? "Cliente",
+      // @ts-expect-error rel
+      servico: (a.servicos?.nome as string | undefined) ?? "Sessão",
+    }));
 
   const porDia = (agendamentos ?? []).reduce<
     Record<string, typeof agendamentos>
@@ -37,6 +56,20 @@ export default async function AdminAgendamentos() {
           Agendamentos
         </h1>
       </header>
+
+      <section>
+        <h2 className="flex items-center gap-2 font-display text-2xl font-medium text-brand-brown">
+          <CalendarDays className="h-5 w-5 text-brand-amber" />
+          Agenda da semana
+        </h2>
+        <p className="mb-4 mt-1 text-sm text-brand-caramel">
+          Visão dos próximos 7 dias com os horários de atendimento.
+        </p>
+        <AgendaSemanal
+          agendamentos={slotsSemana}
+          config={horariosConfig ?? []}
+        />
+      </section>
 
       {Object.keys(porDia).length === 0 ? (
         <div className="card-brand p-10 text-center">

@@ -107,6 +107,8 @@ export interface Produto {
   stripe_price_id: string | null;
   ativo: boolean;
   destaque: boolean;
+  /** TRUE = vendido no site; FALSE = uso interno nos atendimentos (só estoque). */
+  disponivel_venda: boolean;
   tags: string[] | null;
   created_at: string;
 }

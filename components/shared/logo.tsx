@@ -19,8 +19,8 @@ interface LogoProps {
 
 const SOURCES: Record<LogoVariant, string> = {
   "round-color": "/images/logo-redondo-color.jpeg",
-  "horizontal-color": "/images/logo-horizontal-color.jpeg",
-  "round-mono": "/images/logo-redondo.jpeg",
+  "horizontal-color": "/images/logo-horizontal-color.png",
+  "round-mono": "/images/logo-redondo.png",
 };
 
 export function Logo({

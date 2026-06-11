@@ -1,12 +1,22 @@
-import { format, startOfDay, endOfDay, startOfMonth } from "date-fns";
+import {
+  format,
+  startOfDay,
+  endOfDay,
+  startOfMonth,
+  subDays,
+  isSameDay,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   AlertTriangle,
+  BarChart3,
   Calendar,
   DollarSign,
   Package,
+  Sparkles,
   Users,
 } from "lucide-react";
+import { BarrasHorizontais, BarrasVerticais } from "@/components/admin/charts";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/utils";
 
@@ -16,6 +26,7 @@ export default async function AdminDashboard() {
   const inicioDia = startOfDay(hoje).toISOString();
   const fimDia = endOfDay(hoje).toISOString();
   const inicioMes = startOfMonth(hoje).toISOString();
+  const inicio14Dias = startOfDay(subDays(hoje, 13)).toISOString();
 
   const [
     { data: agendamentosHoje },
@@ -23,6 +34,8 @@ export default async function AdminDashboard() {
     { count: novosCadastros },
     { data: produtosBaixos },
     { data: faturamentoMes },
+    { data: sessoes14Dias },
+    { data: servicosMes },
   ] = await Promise.all([
     supabase
       .from("agendamentos")
@@ -52,7 +65,43 @@ export default async function AdminDashboard() {
       .select("valor_pago")
       .gte("data_hora", inicioMes)
       .in("status", ["confirmado", "concluido"]),
+    supabase
+      .from("agendamentos")
+      .select("data_hora, status")
+      .gte("data_hora", inicio14Dias)
+      .lte("data_hora", fimDia)
+      .in("status", ["pendente", "confirmado", "concluido"]),
+    supabase
+      .from("agendamentos")
+      .select("servicos(nome)")
+      .gte("data_hora", inicioMes)
+      .in("status", ["confirmado", "concluido"]),
   ]);
+
+  // Sessões por dia (últimos 14 dias)
+  const porDia14 = Array.from({ length: 14 }, (_, i) => {
+    const dia = subDays(hoje, 13 - i);
+    const total = (sessoes14Dias ?? []).filter((s) =>
+      isSameDay(new Date(s.data_hora), dia)
+    ).length;
+    return {
+      label: format(dia, "dd/MM"),
+      value: total,
+      destaque: isSameDay(dia, hoje),
+    };
+  });
+
+  // Serviços mais procurados no mês
+  const contagemServicos = new Map<string, number>();
+  for (const s of servicosMes ?? []) {
+    // @ts-expect-error rel
+    const nome: string = s.servicos?.nome ?? "Outros";
+    contagemServicos.set(nome, (contagemServicos.get(nome) ?? 0) + 1);
+  }
+  const topServicos = [...contagemServicos.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
 
   const faturamentoDia =
     (pedidosHoje ?? []).reduce((acc, p) => acc + Number(p.valor_total), 0) +
@@ -101,6 +150,44 @@ export default async function AdminDashboard() {
           value={formatBRL(faturamentoMesTotal)}
         />
       </div>
+
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="card-brand p-6">
+          <h2 className="flex items-center gap-2 font-display text-2xl text-brand-brown">
+            <BarChart3 className="h-5 w-5 text-brand-amber" />
+            Sessões · últimos 14 dias
+          </h2>
+          <p className="mt-1 text-sm text-brand-caramel">
+            Agendamentos pendentes, confirmados e concluídos por dia.
+          </p>
+          <div className="mt-6">
+            <BarrasVerticais
+              data={porDia14}
+              altura={140}
+              formatValue={(v) => `${v} ${v === 1 ? "sessão" : "sessões"}`}
+            />
+          </div>
+        </div>
+
+        <div className="card-brand p-6">
+          <h2 className="flex items-center gap-2 font-display text-2xl text-brand-brown">
+            <Sparkles className="h-5 w-5 text-brand-amber" />
+            Serviços do mês
+          </h2>
+          {topServicos.length === 0 ? (
+            <p className="mt-3 text-sm text-brand-caramel">
+              Nenhuma sessão paga neste mês ainda.
+            </p>
+          ) : (
+            <div className="mt-5">
+              <BarrasHorizontais
+                data={topServicos}
+                formatValue={(v) => `${v}x`}
+              />
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="card-brand p-6">

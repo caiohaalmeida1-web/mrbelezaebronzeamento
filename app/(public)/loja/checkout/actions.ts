@@ -51,8 +51,9 @@ export async function finalizarPedido(
   const ids = parsed.data.itens.map((i) => i.id);
   const { data: produtosDb } = await admin
     .from("produtos")
-    .select("id, nome, preco, estoque, tipo")
-    .in("id", ids);
+    .select("id, nome, preco, estoque, tipo, disponivel_venda")
+    .in("id", ids)
+    .eq("ativo", true);
 
   if (!produtosDb || produtosDb.length === 0) {
     return { ok: false, message: "Produtos não encontrados." };
@@ -64,6 +65,12 @@ export async function finalizarPedido(
   for (const item of parsed.data.itens) {
     const prod = produtosDb.find((p) => p.id === item.id);
     if (!prod) return { ok: false, message: "Produto inválido." };
+    if (!prod.disponivel_venda) {
+      return {
+        ok: false,
+        message: `${prod.nome} não está disponível para venda online.`,
+      };
+    }
     if (prod.tipo === "fisico" && prod.estoque < item.quantidade) {
       return { ok: false, message: `Estoque insuficiente: ${prod.nome}` };
     }

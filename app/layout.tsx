@@ -98,7 +98,7 @@ export const metadata: Metadata = {
     canonical: SITE_CONFIG.url,
   },
   icons: {
-    icon: "/images/logo-redondo.jpeg",
+    icon: "/images/logo-redondo.png",
     apple: "/images/logo-redondo-color.jpeg",
   },
 };

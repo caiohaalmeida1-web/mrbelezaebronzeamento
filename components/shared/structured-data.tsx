@@ -113,7 +113,7 @@ export function ArticleSchema({
       name: SITE_CONFIG.name,
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_CONFIG.url}/images/logo-horizontal-color.jpeg`,
+        url: `${SITE_CONFIG.url}/images/logo-horizontal-color.png`,
       },
     },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },

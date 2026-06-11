@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Edit, Plus, Package } from "lucide-react";
+import { Edit, Plus, Package, ShoppingBag, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/server";
 import { formatBRL } from "@/lib/utils";
+import type { Produto } from "@/types/database";
 
 export default async function AdminProdutos() {
   const supabase = createClient();
@@ -11,6 +12,10 @@ export default async function AdminProdutos() {
     .from("produtos")
     .select("*")
     .order("created_at", { ascending: false });
+
+  const lista: Produto[] = produtos ?? [];
+  const venda = lista.filter((p) => p.disponivel_venda);
+  const usoInterno = lista.filter((p) => !p.disponivel_venda);
 
   return (
     <div className="space-y-8">
@@ -29,10 +34,60 @@ export default async function AdminProdutos() {
         </Button>
       </header>
 
-      {!produtos || produtos.length === 0 ? (
+      {lista.length === 0 ? (
         <div className="card-brand p-10 text-center">
           <Package className="mx-auto h-12 w-12 text-brand-caramel/50" />
           <p className="mt-3 text-brand-caramel">Nenhum produto cadastrado.</p>
+        </div>
+      ) : (
+        <>
+          <GrupoProdutos
+            titulo="À venda no site"
+            descricao="Aparecem na loja e podem ser comprados online."
+            icon={<ShoppingBag className="h-5 w-5 text-brand-amber" />}
+            produtos={venda}
+            vazio="Nenhum produto à venda. Cadastre biquínis e acessórios para vender online."
+          />
+          <GrupoProdutos
+            titulo="Uso interno (atendimentos)"
+            descricao="Estoque dos produtos usados nas sessões — não aparecem na loja."
+            icon={<Warehouse className="h-5 w-5 text-brand-amber" />}
+            produtos={usoInterno}
+            vazio="Nenhum produto de uso interno cadastrado."
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function GrupoProdutos({
+  titulo,
+  descricao,
+  icon,
+  produtos,
+  vazio,
+}: {
+  titulo: string;
+  descricao: string;
+  icon: React.ReactNode;
+  produtos: Produto[];
+  vazio: string;
+}) {
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="flex items-center gap-2 font-display text-2xl font-medium text-brand-brown">
+          {icon}
+          {titulo}
+          <Badge variant="warm">{produtos.length}</Badge>
+        </h2>
+        <p className="mt-1 text-sm text-brand-caramel">{descricao}</p>
+      </div>
+
+      {produtos.length === 0 ? (
+        <div className="card-brand p-6 text-center text-sm text-brand-caramel">
+          {vazio}
         </div>
       ) : (
         <div className="card-brand overflow-x-auto">
@@ -87,6 +142,6 @@ export default async function AdminProdutos() {
           </table>
         </div>
       )}
-    </div>
+    </section>
   );
 }

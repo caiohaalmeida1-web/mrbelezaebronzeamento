@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/scroll-reveal";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import { formatDateBR } from "@/lib/utils";
 import type { BlogPost } from "@/types/database";
 
@@ -39,7 +39,7 @@ const FALLBACK: Pick<
 ];
 
 export async function BlogSection() {
-  const supabase = createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("blog_posts")
     .select("id, titulo, slug, resumo, publicado_em, tags")

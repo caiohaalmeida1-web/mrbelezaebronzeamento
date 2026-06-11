@@ -2,6 +2,20 @@ import { PlayCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
+import type { Produto } from "@/types/database";
+
+type ProdutoDigital = Pick<
+  Produto,
+  "id" | "nome" | "slug" | "tipo" | "arquivo_digital_url"
+>;
+
+interface PedidoComItens {
+  id: string;
+  status: string;
+  pedido_itens: { produtos: ProdutoDigital | null }[] | null;
+}
+
+const TIPOS_DIGITAIS = ["digital", "curso", "ebook", "assinatura"] as const;
 
 export default async function CursosPage() {
   const supabase = createClient();
@@ -16,17 +30,18 @@ export default async function CursosPage() {
       "id, status, pedido_itens(produtos(id, nome, slug, tipo, arquivo_digital_url))"
     )
     .eq("cliente_id", user.id)
-    .eq("status", "pago");
+    .eq("status", "pago")
+    .returns<PedidoComItens[]>();
 
-  const itensDigitais =
+  const itensDigitais: ProdutoDigital[] =
     comprasDigitais?.flatMap(
       (p) =>
         p.pedido_itens
-          ?.map((i: any) => i.produtos)
+          ?.map((i) => i.produtos)
           .filter(
-            (prod: any) =>
-              prod &&
-              ["digital", "curso", "ebook", "assinatura"].includes(prod.tipo)
+            (prod): prod is ProdutoDigital =>
+              prod !== null &&
+              (TIPOS_DIGITAIS as readonly string[]).includes(prod.tipo)
           ) ?? []
     ) ?? [];
 
@@ -57,7 +72,7 @@ export default async function CursosPage() {
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {itensDigitais.map((item: any) => (
+          {itensDigitais.map((item) => (
             <article key={item.id} className="card-brand p-6">
               <PlayCircle className="h-8 w-8 text-brand-amber" />
               <h3 className="mt-3 font-display text-xl font-medium text-brand-brown">
