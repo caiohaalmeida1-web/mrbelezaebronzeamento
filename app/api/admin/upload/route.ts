@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   MAX_IMAGEM_MB,
@@ -7,38 +6,33 @@ import {
   tamanhoImagemValido,
   tipoImagemValido,
 } from "@/lib/upload-limits";
+import {
+  bucketAdminValido,
+  verificarAdminApi,
+} from "@/lib/verificar-admin-api";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-async function verificarAdmin() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  return profile?.role === "admin" ? user : null;
-}
-
 /**
- * POST /api/admin/produtos/upload
- * Body JSON: { fileName, fileType, fileSize }
+ * POST /api/admin/upload
+ * Body JSON: { bucket, fileName, fileType, fileSize, pathPrefix? }
  * Retorna URL assinada para o browser enviar o arquivo direto ao Supabase Storage.
  */
 export async function POST(req: NextRequest) {
-  const adminUser = await verificarAdmin();
+  const adminUser = await verificarAdminApi();
   if (!adminUser) {
     return NextResponse.json({ ok: false, erro: "Sem permissão." }, { status: 403 });
   }
 
-  let body: { fileName?: string; fileType?: string; fileSize?: number };
+  let body: {
+    bucket?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+    pathPrefix?: string;
+  };
+
   try {
     body = await req.json();
   } catch {
@@ -48,9 +42,21 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  if (!bucketAdminValido(body.bucket)) {
+    return NextResponse.json(
+      { ok: false, erro: "Bucket de destino inválido." },
+      { status: 400 }
+    );
+  }
+
   const fileName = body.fileName ?? "imagem.jpg";
   const fileType = body.fileType || "image/jpeg";
   const fileSize = Number(body.fileSize ?? 0);
+  const prefix =
+    body.pathPrefix?.replace(/^\/+|\/+$/g, "") &&
+    !body.pathPrefix.includes("..")
+      ? `${body.pathPrefix.replace(/^\/+|\/+$/g, "")}/`
+      : "";
 
   if (!fileSize || !tamanhoImagemValido(fileSize)) {
     return NextResponse.json(
@@ -72,14 +78,14 @@ export async function POST(req: NextRequest) {
   try {
     const admin = createAdminClient();
     const ext = extensaoImagem(fileName, fileType);
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${prefix}${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const { data, error } = await admin.storage
-      .from("produtos")
+      .from(body.bucket)
       .createSignedUploadUrl(path, { upsert: false });
 
     if (error || !data?.signedUrl) {
-      console.error("[upload produto] signed url", error);
+      console.error(`[upload ${body.bucket}] signed url`, error);
       const msg = error?.message ?? "Erro desconhecido";
       return NextResponse.json(
         {
@@ -94,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     const {
       data: { publicUrl },
-    } = admin.storage.from("produtos").getPublicUrl(path);
+    } = admin.storage.from(body.bucket).getPublicUrl(path);
 
     return NextResponse.json({
       ok: true,
@@ -104,7 +110,7 @@ export async function POST(req: NextRequest) {
       contentType: fileType,
     });
   } catch (e) {
-    console.error("[upload produto] exceção", e);
+    console.error(`[upload ${body.bucket}] exceção`, e);
     const msg =
       e instanceof Error && e.message.includes("SUPABASE_SERVICE_ROLE_KEY")
         ? "Servidor sem chave de admin (SUPABASE_SERVICE_ROLE_KEY). Configure na Vercel."

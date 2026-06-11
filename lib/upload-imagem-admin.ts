@@ -3,24 +3,37 @@ import {
   tamanhoImagemValido,
   tipoImagemValido,
 } from "@/lib/upload-limits";
+import type { AdminUploadBucket } from "@/lib/verificar-admin-api";
 
 const UPLOAD_TIMEOUT_MS = 90_000;
 
 interface UploadMeta {
   ok: boolean;
   signedUrl?: string;
+  path?: string;
   publicUrl?: string;
   contentType?: string;
   erro?: string;
 }
 
+export type ResultadoUploadImagem =
+  | { ok: true; url: string; path: string }
+  | { ok: false; erro: string };
+
+interface OpcoesUpload {
+  bucket: AdminUploadBucket;
+  /** Ex.: "capas" para imagens do blog */
+  pathPrefix?: string;
+}
+
 /**
- * Envia imagem de produto direto ao Supabase Storage via URL assinada.
- * O arquivo não passa pelo servidor Next.js — evita travamento de Server Actions.
+ * Envia imagem direto ao Supabase Storage via URL assinada.
+ * O arquivo não passa pelo servidor Next.js — evita travamento.
  */
-export async function enviarImagemProduto(
-  file: File
-): Promise<{ ok: true; url: string } | { ok: false; erro: string }> {
+export async function enviarImagemAdmin(
+  file: File,
+  { bucket, pathPrefix }: OpcoesUpload
+): Promise<ResultadoUploadImagem> {
   if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
     return { ok: false, erro: "Envie apenas imagens JPG, PNG ou WebP." };
   }
@@ -33,17 +46,22 @@ export async function enviarImagemProduto(
 
   let metaRes: Response;
   try {
-    metaRes = await fetch("/api/admin/produtos/upload", {
+    metaRes = await fetch("/api/admin/upload", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        bucket,
+        pathPrefix,
         fileName: file.name,
         fileType: file.type || "image/jpeg",
         fileSize: file.size,
       }),
     });
   } catch {
-    return { ok: false, erro: "Sem conexão com o servidor. Verifique a internet." };
+    return {
+      ok: false,
+      erro: "Sem conexão com o servidor. Verifique a internet.",
+    };
   }
 
   let meta: UploadMeta;
@@ -53,7 +71,13 @@ export async function enviarImagemProduto(
     return { ok: false, erro: "Resposta inválida do servidor." };
   }
 
-  if (!metaRes.ok || !meta.ok || !meta.signedUrl || !meta.publicUrl) {
+  if (
+    !metaRes.ok ||
+    !meta.ok ||
+    !meta.signedUrl ||
+    !meta.publicUrl ||
+    !meta.path
+  ) {
     return {
       ok: false,
       erro: meta.erro ?? `Erro do servidor (${metaRes.status}).`,
@@ -75,14 +99,14 @@ export async function enviarImagemProduto(
 
     if (!uploadRes.ok) {
       const detalhe = await uploadRes.text().catch(() => "");
-      console.error("[upload produto] storage PUT", uploadRes.status, detalhe);
+      console.error(`[upload ${bucket}] storage PUT`, uploadRes.status, detalhe);
       return {
         ok: false,
         erro: `Storage recusou o envio (HTTP ${uploadRes.status}). Tente outra imagem.`,
       };
     }
 
-    return { ok: true, url: meta.publicUrl };
+    return { ok: true, url: meta.publicUrl, path: meta.path };
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
       return {
@@ -94,4 +118,19 @@ export async function enviarImagemProduto(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/** Atalho para upload no bucket de produtos. */
+export function enviarImagemProduto(file: File) {
+  return enviarImagemAdmin(file, { bucket: "produtos" });
+}
+
+/** Atalho para upload no bucket da galeria de resultados. */
+export function enviarImagemGaleria(file: File) {
+  return enviarImagemAdmin(file, { bucket: "galeria" });
+}
+
+/** Atalho para capa de post do blog. */
+export function enviarImagemBlogCapa(file: File) {
+  return enviarImagemAdmin(file, { bucket: "blog", pathPrefix: "capas" });
 }

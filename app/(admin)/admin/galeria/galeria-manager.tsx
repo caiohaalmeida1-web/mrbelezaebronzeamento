@@ -6,12 +6,8 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/client";
-import {
-  MAX_IMAGEM_MB,
-  tamanhoImagemValido,
-  tipoImagemValido,
-} from "@/lib/upload-limits";
+import { MAX_IMAGEM_MB } from "@/lib/upload-limits";
+import { enviarImagemGaleria } from "@/lib/upload-imagem-admin";
 import type { GaleriaFoto } from "@/types/database";
 import { alternarFoto, excluirFoto, registrarFoto } from "./actions";
 
@@ -28,38 +24,29 @@ export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
     setEnviando(true);
     setErro(null);
 
-    const supabase = createClient();
+    try {
+      for (const file of Array.from(files)) {
+        const upload = await enviarImagemGaleria(file);
+        if (!upload.ok) {
+          setErro(`"${file.name}": ${upload.erro}`);
+          continue;
+        }
 
-    for (const file of Array.from(files)) {
-      if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
-        setErro(`"${file.name}" não é JPG, PNG ou WebP.`);
-        continue;
+        const res = await registrarFoto({
+          titulo: null,
+          storagePath: upload.path,
+        });
+        if (!res.ok) {
+          setErro(res.erro ?? `Erro ao registrar "${file.name}".`);
+        }
       }
-      if (!tamanhoImagemValido(file.size)) {
-        setErro(`"${file.name}" passa de ${MAX_IMAGEM_MB}MB.`);
-        continue;
-      }
-
-      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("galeria")
-        .upload(path, file, { contentType: file.type });
-
-      if (uploadError) {
-        setErro(`Falha ao enviar "${file.name}": ${uploadError.message}`);
-        continue;
-      }
-
-      // Sem título por padrão — nome de arquivo não deve aparecer no site
-      const res = await registrarFoto({ titulo: null, storagePath: path });
-      if (!res.ok) setErro(res.erro ?? "Erro ao registrar a foto.");
+    } catch {
+      setErro("Erro inesperado ao enviar as fotos.");
+    } finally {
+      setEnviando(false);
+      if (inputRef.current) inputRef.current.value = "";
+      startTransition(() => router.refresh());
     }
-
-    setEnviando(false);
-    if (inputRef.current) inputRef.current.value = "";
-    startTransition(() => router.refresh());
   }
 
   async function handleExcluir(id: string) {
@@ -94,8 +81,8 @@ export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
               Enviar fotos
             </h2>
             <p className="mt-1 text-sm text-brand-caramel">
-              JPG, PNG ou WebP. Você pode selecionar várias de uma vez — elas
-              aparecem na galeria da página inicial.
+              JPG, PNG ou WebP até {MAX_IMAGEM_MB}MB. Você pode selecionar várias
+              de uma vez — elas aparecem na galeria da página inicial.
             </p>
           </div>
           <Button

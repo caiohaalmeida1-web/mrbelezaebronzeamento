@@ -14,7 +14,7 @@ import {
   tipoImagemValido,
   tamanhoImagemValido,
 } from "@/lib/upload-limits";
-import { enviarImagemProduto } from "@/lib/upload-produto";
+import { enviarImagemProduto } from "@/lib/upload-imagem-admin";
 import type { Produto, TipoProduto } from "@/types/database";
 import { excluirProduto, salvarProduto } from "./actions";
 

@@ -8,13 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
-import {
-  MAX_IMAGEM_MB,
-  tamanhoImagemValido,
-  tipoImagemValido,
-} from "@/lib/upload-limits";
+import { MAX_IMAGEM_MB } from "@/lib/upload-limits";
+import { enviarImagemBlogCapa } from "@/lib/upload-imagem-admin";
 import type { BlogPost } from "@/types/database";
 import { excluirPost, salvarPost } from "./actions";
 
@@ -50,35 +46,16 @@ export function PostForm({ post }: { post?: BlogPost }) {
   async function handleUploadCapa(file: File | undefined) {
     if (!file) return;
 
-    if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
-      setErro("Envie apenas imagens JPG, PNG ou WebP.");
-      return;
-    }
-    if (!tamanhoImagemValido(file.size)) {
-      setErro(`Imagem muito grande. Máximo ${MAX_IMAGEM_MB}MB.`);
-      return;
-    }
-
     setEnviandoCapa(true);
     setErro(null);
 
     try {
-      const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `capas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-    const { error } = await supabase.storage
-      .from("blog")
-      .upload(path, file, { contentType: file.type });
-
-    if (error) {
-      setErro(`Falha ao enviar a capa: ${error.message}`);
-    } else {
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("blog").getPublicUrl(path);
-      setImagemCapa(publicUrl);
-    }
+      const res = await enviarImagemBlogCapa(file);
+      if (!res.ok) {
+        setErro(res.erro);
+        return;
+      }
+      setImagemCapa(res.url);
     } catch {
       setErro("Erro inesperado ao enviar a capa.");
     } finally {
