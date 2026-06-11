@@ -8,10 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
+import {
+  MAX_IMAGEM_MB,
+  tipoImagemValido,
+  tamanhoImagemValido,
+} from "@/lib/upload-limits";
 import type { Produto, TipoProduto } from "@/types/database";
-import { excluirProduto, salvarProduto } from "./actions";
+import { excluirProduto, salvarProduto, uploadImagemProduto } from "./actions";
 
 const TIPOS: { value: TipoProduto; label: string }[] = [
   { value: "fisico", label: "Físico (enviado pelo correio)" },
@@ -20,9 +24,6 @@ const TIPOS: { value: TipoProduto; label: string }[] = [
   { value: "ebook", label: "E-book" },
   { value: "assinatura", label: "Assinatura" },
 ];
-
-const MAX_IMAGEM_MB = 5;
-const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"];
 
 export function ProdutoForm({ produto }: { produto?: Produto }) {
   const router = useRouter();
@@ -70,11 +71,11 @@ export function ProdutoForm({ produto }: { produto?: Produto }) {
   async function handleUploadImagem(file: File | undefined) {
     if (!file) return;
 
-    if (!TIPOS_IMAGEM.includes(file.type)) {
+    if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
       setErro("Envie apenas imagens JPG, PNG ou WebP.");
       return;
     }
-    if (file.size > MAX_IMAGEM_MB * 1024 * 1024) {
+    if (!tamanhoImagemValido(file.size)) {
       setErro(`Imagem muito grande. Máximo ${MAX_IMAGEM_MB}MB.`);
       return;
     }
@@ -82,25 +83,22 @@ export function ProdutoForm({ produto }: { produto?: Produto }) {
     setEnviandoImagem(true);
     setErro(null);
 
-    const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const { error } = await supabase.storage
-      .from("produtos")
-      .upload(path, file, { contentType: file.type });
-
-    if (error) {
-      setErro(`Falha ao enviar a imagem: ${error.message}`);
-    } else {
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("produtos").getPublicUrl(path);
-      setImagens((prev) => [...prev, publicUrl]);
+      const res = await uploadImagemProduto(formData);
+      if (!res.ok || !res.url) {
+        setErro(res.erro ?? "Falha ao enviar a imagem.");
+        return;
+      }
+      setImagens((prev) => [...prev, res.url!]);
+    } catch {
+      setErro("Erro inesperado ao enviar a imagem. Tente novamente.");
+    } finally {
+      setEnviandoImagem(false);
+      if (imagemInputRef.current) imagemInputRef.current.value = "";
     }
-
-    setEnviandoImagem(false);
-    if (imagemInputRef.current) imagemInputRef.current.value = "";
   }
 
   async function handleSalvar() {

@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { slugify } from "@/lib/utils";
+import {
+  MAX_IMAGEM_MB,
+  tamanhoImagemValido,
+  tipoImagemValido,
+} from "@/lib/upload-limits";
 import type { BlogPost } from "@/types/database";
 import { excluirPost, salvarPost } from "./actions";
-
-const MAX_IMAGEM_MB = 5;
-const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"];
 
 export function PostForm({ post }: { post?: BlogPost }) {
   const router = useRouter();
@@ -48,11 +50,11 @@ export function PostForm({ post }: { post?: BlogPost }) {
   async function handleUploadCapa(file: File | undefined) {
     if (!file) return;
 
-    if (!TIPOS_IMAGEM.includes(file.type)) {
+    if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
       setErro("Envie apenas imagens JPG, PNG ou WebP.");
       return;
     }
-    if (file.size > MAX_IMAGEM_MB * 1024 * 1024) {
+    if (!tamanhoImagemValido(file.size)) {
       setErro(`Imagem muito grande. Máximo ${MAX_IMAGEM_MB}MB.`);
       return;
     }
@@ -60,7 +62,8 @@ export function PostForm({ post }: { post?: BlogPost }) {
     setEnviandoCapa(true);
     setErro(null);
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const path = `capas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
@@ -76,9 +79,12 @@ export function PostForm({ post }: { post?: BlogPost }) {
       } = supabase.storage.from("blog").getPublicUrl(path);
       setImagemCapa(publicUrl);
     }
-
-    setEnviandoCapa(false);
-    if (capaInputRef.current) capaInputRef.current.value = "";
+    } catch {
+      setErro("Erro inesperado ao enviar a capa.");
+    } finally {
+      setEnviandoCapa(false);
+      if (capaInputRef.current) capaInputRef.current.value = "";
+    }
   }
 
   async function handleSalvar() {

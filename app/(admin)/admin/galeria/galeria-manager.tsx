@@ -7,11 +7,13 @@ import { Eye, EyeOff, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
+import {
+  MAX_IMAGEM_MB,
+  tamanhoImagemValido,
+  tipoImagemValido,
+} from "@/lib/upload-limits";
 import type { GaleriaFoto } from "@/types/database";
 import { alternarFoto, excluirFoto, registrarFoto } from "./actions";
-
-const MAX_IMAGEM_MB = 5;
-const TIPOS_IMAGEM = ["image/jpeg", "image/png", "image/webp"];
 
 export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
   const router = useRouter();
@@ -29,11 +31,11 @@ export function GaleriaManager({ fotos }: { fotos: GaleriaFoto[] }) {
     const supabase = createClient();
 
     for (const file of Array.from(files)) {
-      if (!TIPOS_IMAGEM.includes(file.type)) {
+      if (!tipoImagemValido(file.type || "image/jpeg", file.name)) {
         setErro(`"${file.name}" não é JPG, PNG ou WebP.`);
         continue;
       }
-      if (file.size > MAX_IMAGEM_MB * 1024 * 1024) {
+      if (!tamanhoImagemValido(file.size)) {
         setErro(`"${file.name}" passa de ${MAX_IMAGEM_MB}MB.`);
         continue;
       }

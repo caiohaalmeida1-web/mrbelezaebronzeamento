@@ -3,7 +3,14 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/utils";
+import {
+  MAX_IMAGEM_MB,
+  extensaoImagem,
+  tamanhoImagemValido,
+  tipoImagemValido,
+} from "@/lib/upload-limits";
 
 const ProdutoSchema = z.object({
   id: z.string().uuid().nullable().optional(),
@@ -125,4 +132,64 @@ export async function excluirProduto(id: string) {
 
   revalidarLoja(produto?.slug ?? "");
   return { ok: true };
+}
+
+/** Envia imagem de produto via servidor (evita travamento do upload no browser). */
+export async function uploadImagemProduto(formData: FormData) {
+  const supabase = await clientAdmin();
+  if (!supabase) return { ok: false, erro: "Sem permissão" };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, erro: "Selecione uma imagem válida." };
+  }
+
+  if (!tamanhoImagemValido(file.size)) {
+    return {
+      ok: false,
+      erro: `Imagem muito grande. Máximo ${MAX_IMAGEM_MB}MB.`,
+    };
+  }
+
+  const mime = file.type || "image/jpeg";
+  if (!tipoImagemValido(mime, file.name)) {
+    return { ok: false, erro: "Envie apenas imagens JPG, PNG ou WebP." };
+  }
+
+  const ext = extensaoImagem(file.name, mime);
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  try {
+    const admin = createAdminClient();
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { error } = await admin.storage.from("produtos").upload(path, buffer, {
+      contentType: mime,
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+    if (error) {
+      console.error("[produtos] upload imagem", error);
+      return {
+        ok: false,
+        erro:
+          error.message.includes("Bucket not found")
+            ? "Bucket de imagens não configurado. Contate o suporte."
+            : `Falha ao enviar a imagem: ${error.message}`,
+      };
+    }
+
+    const {
+      data: { publicUrl },
+    } = admin.storage.from("produtos").getPublicUrl(path);
+
+    return { ok: true, url: publicUrl };
+  } catch (e) {
+    console.error("[produtos] upload imagem exceção", e);
+    return {
+      ok: false,
+      erro: "Erro inesperado ao enviar a imagem. Tente novamente.",
+    };
+  }
 }
