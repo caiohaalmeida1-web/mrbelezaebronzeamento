@@ -12,9 +12,11 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCarrinho } from "@/hooks/use-carrinho";
+import { useEnriquecerImagensCarrinho } from "@/hooks/use-enriquecer-imagens-carrinho";
 import { formatBRL } from "@/lib/utils";
 
 export function CarrinhoDrawer() {
+  useEnriquecerImagensCarrinho();
   const itens = useCarrinho((s) => s.itens);
   const drawerAberto = useCarrinho((s) => s.drawerAberto);
   const abrir = useCarrinho((s) => s.abrir);

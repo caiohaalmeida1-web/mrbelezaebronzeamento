@@ -22,6 +22,7 @@ interface Estado {
   adicionar: (item: ItemCarrinho) => void;
   remover: (id: string) => void;
   alterarQuantidade: (id: string, delta: number) => void;
+  atualizarImagens: (map: Record<string, string>) => void;
   limpar: () => void;
   total: () => number;
   totalItens: () => number;
@@ -58,6 +59,12 @@ export const useCarrinho = create<Estado>()(
               i.id === id ? { ...i, quantidade: i.quantidade + delta } : i
             )
             .filter((i) => i.quantidade > 0),
+        })),
+      atualizarImagens: (map) =>
+        set((s) => ({
+          itens: s.itens.map((i) =>
+            map[i.id] ? { ...i, imagem: map[i.id] } : i
+          ),
         })),
       limpar: () => set({ itens: [] }),
       total: () =>
