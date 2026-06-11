@@ -14,8 +14,9 @@ import {
   tipoImagemValido,
   tamanhoImagemValido,
 } from "@/lib/upload-limits";
+import { enviarImagemProduto } from "@/lib/upload-produto";
 import type { Produto, TipoProduto } from "@/types/database";
-import { excluirProduto, salvarProduto, uploadImagemProduto } from "./actions";
+import { excluirProduto, salvarProduto } from "./actions";
 
 const TIPOS: { value: TipoProduto; label: string }[] = [
   { value: "fisico", label: "Físico (enviado pelo correio)" },
@@ -84,15 +85,12 @@ export function ProdutoForm({ produto }: { produto?: Produto }) {
     setErro(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await uploadImagemProduto(formData);
-      if (!res.ok || !res.url) {
-        setErro(res.erro ?? "Falha ao enviar a imagem.");
+      const res = await enviarImagemProduto(file);
+      if (!res.ok) {
+        setErro(res.erro);
         return;
       }
-      setImagens((prev) => [...prev, res.url!]);
+      setImagens((prev) => [...prev, res.url]);
     } catch {
       setErro("Erro inesperado ao enviar a imagem. Tente novamente.");
     } finally {
