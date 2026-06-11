@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
+import Image from "next/image";
+import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -76,8 +77,20 @@ export function CarrinhoDrawer() {
                     key={it.id}
                     className="flex gap-3 border-b border-brand-gold/10 py-4"
                   >
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-amber-gradient text-white">
-                      <ShoppingBag className="h-7 w-7" />
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-amber-gradient">
+                      {it.imagem ? (
+                        <Image
+                          src={it.imagem}
+                          alt={it.nome}
+                          fill
+                          sizes="80px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-white">
+                          <ShoppingBag className="h-7 w-7" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex flex-1 flex-col">
                       <div className="flex items-start justify-between gap-2">

@@ -43,6 +43,7 @@ export const useCarrinho = create<Estado>()(
             novos[idx] = {
               ...novos[idx],
               quantidade: novos[idx].quantidade + item.quantidade,
+              imagem: item.imagem ?? novos[idx].imagem,
             };
             return { itens: novos, drawerAberto: true };
           }
