@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, Droplets, ShieldCheck, Sparkles, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -112,24 +113,51 @@ export default async function ProdutoPage({ params }: Props) {
 }
 
 function ProdutoVisual({ produto }: { produto: Produto }) {
+  const imagens = produto.imagens?.filter(Boolean) ?? [];
+  const principal = imagens[0];
+
   return (
     <div className="space-y-3">
-      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-3xl bg-amber-gradient shadow-2xl shadow-brand-brown/15">
-        <Droplets className="h-32 w-32 text-white/95 drop-shadow-xl" />
+      <div className="relative aspect-square overflow-hidden rounded-3xl bg-amber-gradient shadow-2xl shadow-brand-brown/15">
+        {principal ? (
+          <Image
+            src={principal}
+            alt={produto.nome}
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Droplets className="h-32 w-32 text-white/95 drop-shadow-xl" />
+          </div>
+        )}
         {produto.destaque && (
-          <Badge variant="sun" className="absolute right-4 top-4">
+          <Badge variant="sun" className="absolute right-4 top-4 z-10">
             ⭐ Destaque
           </Badge>
         )}
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="aspect-square rounded-2xl bg-gradient-to-br from-brand-warm to-brand-cream ring-1 ring-brand-gold/15"
-          />
-        ))}
-      </div>
+
+      {imagens.length > 1 && (
+        <div className="grid grid-cols-3 gap-3">
+          {imagens.slice(0, 3).map((url, i) => (
+            <div
+              key={url}
+              className="relative aspect-square overflow-hidden rounded-2xl ring-1 ring-brand-gold/15"
+            >
+              <Image
+                src={url}
+                alt={`${produto.nome} — foto ${i + 1}`}
+                fill
+                sizes="(max-width: 1024px) 33vw, 15vw"
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

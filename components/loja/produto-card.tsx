@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingBag, Sparkles, Droplets } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export function ProdutoCard({ produto, index = 0 }: Props) {
   const adicionar = useCarrinho((s) => s.adicionar);
   const Icon = ICONS[index % ICONS.length];
   const gradient = GRADIENTS[index % GRADIENTS.length];
+  const imagem = produto.imagens?.[0];
   const esgotando = produto.tipo === "fisico" && produto.estoque > 0 && produto.estoque < 5;
   const esgotado = produto.tipo === "fisico" && produto.estoque === 0;
 
@@ -46,10 +48,20 @@ export function ProdutoCard({ produto, index = 0 }: Props) {
     <article className="card-brand group flex h-full flex-col overflow-hidden">
       <Link
         href={`/loja/${produto.slug}`}
-        className={`relative flex h-48 items-center justify-center bg-gradient-to-br ${gradient}`}
+        className={`relative flex h-48 items-center justify-center overflow-hidden bg-gradient-to-br ${gradient}`}
         aria-label={produto.nome}
       >
-        <Icon className="h-16 w-16 text-white/90 drop-shadow-md transition-transform duration-300 group-hover:scale-110" />
+        {imagem ? (
+          <Image
+            src={imagem}
+            alt={produto.nome}
+            fill
+            sizes="(max-width: 640px) 100vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <Icon className="h-16 w-16 text-white/90 drop-shadow-md transition-transform duration-300 group-hover:scale-110" />
+        )}
         {produto.destaque && (
           <Badge variant="sun" className="absolute right-3 top-3 shadow-md">
             ⭐ Destaque
