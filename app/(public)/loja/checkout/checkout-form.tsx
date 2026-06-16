@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2, ShieldCheck, ShoppingBag } from "lucide-react";
+import { CreditCard, Loader2, MapPin, ShieldCheck, ShoppingBag, Store, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,8 @@ import {
   isStripeConfigured,
 } from "@/components/shared/stripe-payment-form";
 import { useCarrinho } from "@/hooks/use-carrinho";
-import { formatBRL } from "@/lib/utils";
+import { cn, formatBRL, FORMA_ENTREGA_LABEL, SITE_CONFIG } from "@/lib/utils";
+import type { FormaEntrega } from "@/types/database";
 import { finalizarPedido } from "./actions";
 
 interface Props {
@@ -34,6 +35,7 @@ export function CheckoutForm({ perfil }: Props) {
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
+  const [formaEntrega, setFormaEntrega] = useState<FormaEntrega>("envio");
   const [carregando, setCarregando] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [totalPedido, setTotalPedido] = useState(0);
@@ -99,17 +101,19 @@ export function CheckoutForm({ perfil }: Props) {
         itens: itens.map((i) => ({ id: i.id, quantidade: i.quantidade })),
         nome,
         email,
-        endereco: temFisico
-          ? {
-              cep,
-              rua,
-              numero,
-              complemento: complemento || undefined,
-              bairro,
-              cidade,
-              estado,
-            }
-          : undefined,
+        formaEntrega: temFisico ? formaEntrega : undefined,
+        endereco:
+          temFisico && formaEntrega === "envio"
+            ? {
+                cep,
+                rua,
+                numero,
+                complemento: complemento || undefined,
+                bairro,
+                cidade,
+                estado,
+              }
+            : undefined,
       });
 
       if (!result.ok) {
@@ -159,47 +163,114 @@ export function CheckoutForm({ perfil }: Props) {
         {temFisico && (
           <>
             <h3 className="mt-8 font-display text-2xl text-brand-brown">
-              Endereço de entrega
+              Como você prefere receber?
             </h3>
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="cep">CEP*</Label>
-                <Input id="cep" value={cep} onChange={(e) => setCep(e.target.value)} required />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="rua">Rua*</Label>
-                <Input id="rua" value={rua} onChange={(e) => setRua(e.target.value)} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="numero">Número*</Label>
-                <Input id="numero" value={numero} onChange={(e) => setNumero(e.target.value)} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="complemento">Complemento</Label>
-                <Input
-                  id="complemento"
-                  value={complemento}
-                  onChange={(e) => setComplemento(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="bairro">Bairro*</Label>
-                <Input id="bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} required />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cidade">Cidade*</Label>
-                <Input
-                  id="cidade"
-                  value={cidade}
-                  onChange={(e) => setCidade(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="estado">Estado*</Label>
-                <Input id="estado" value={estado} onChange={(e) => setEstado(e.target.value)} required />
-              </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    id: "envio" as const,
+                    icon: Truck,
+                    titulo: "Envio",
+                    descricao: "Entrega no endereço informado",
+                  },
+                  {
+                    id: "retirada" as const,
+                    icon: Store,
+                    titulo: "Retirada na loja",
+                    descricao: "Busque no nosso espaço em Vicente Pires",
+                  },
+                ] as const
+              ).map((opcao) => {
+                const Icon = opcao.icon;
+                const ativo = formaEntrega === opcao.id;
+                return (
+                  <button
+                    key={opcao.id}
+                    type="button"
+                    onClick={() => setFormaEntrega(opcao.id)}
+                    className={cn(
+                      "rounded-2xl border-2 p-4 text-left transition-all",
+                      ativo
+                        ? "border-brand-amber bg-brand-warm/80 shadow-md shadow-brand-amber/10"
+                        : "border-brand-gold/20 bg-white/60 hover:border-brand-gold/40"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-5 w-5",
+                        ativo ? "text-brand-amber" : "text-brand-caramel"
+                      )}
+                    />
+                    <p className="mt-2 font-semibold text-brand-brown">
+                      {opcao.titulo}
+                    </p>
+                    <p className="mt-1 text-sm text-brand-caramel">
+                      {opcao.descricao}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
+
+            {formaEntrega === "retirada" ? (
+              <div className="mt-5 flex gap-3 rounded-2xl bg-brand-warm/60 p-4 text-sm text-brand-brown">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-amber" />
+                <div>
+                  <p className="font-semibold">Local de retirada</p>
+                  <p className="mt-1 text-brand-caramel">{SITE_CONFIG.address}</p>
+                  <p className="mt-1 text-brand-caramel">
+                    Após a confirmação do pagamento, avisaremos quando estiver pronto
+                    para retirada.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h3 className="mt-8 font-display text-2xl text-brand-brown">
+                  Endereço de entrega
+                </h3>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="cep">CEP*</Label>
+                    <Input id="cep" value={cep} onChange={(e) => setCep(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="rua">Rua*</Label>
+                    <Input id="rua" value={rua} onChange={(e) => setRua(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="numero">Número*</Label>
+                    <Input id="numero" value={numero} onChange={(e) => setNumero(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="complemento">Complemento</Label>
+                    <Input
+                      id="complemento"
+                      value={complemento}
+                      onChange={(e) => setComplemento(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="bairro">Bairro*</Label>
+                    <Input id="bairro" value={bairro} onChange={(e) => setBairro(e.target.value)} required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cidade">Cidade*</Label>
+                    <Input
+                      id="cidade"
+                      value={cidade}
+                      onChange={(e) => setCidade(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label htmlFor="estado">Estado*</Label>
+                    <Input id="estado" value={estado} onChange={(e) => setEstado(e.target.value)} required />
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -219,6 +290,14 @@ export function CheckoutForm({ perfil }: Props) {
             </li>
           ))}
         </ul>
+        {temFisico && (
+          <p className="mt-4 text-sm text-brand-caramel">
+            Recebimento:{" "}
+            <span className="font-semibold text-brand-brown">
+              {FORMA_ENTREGA_LABEL[formaEntrega]}
+            </span>
+          </p>
+        )}
         <div className="mt-5 flex justify-between border-t border-brand-gold/15 pt-4">
           <span className="text-brand-caramel">Total</span>
           <span className="font-display text-2xl font-semibold text-brand-brown">

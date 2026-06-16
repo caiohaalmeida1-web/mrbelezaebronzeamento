@@ -71,6 +71,13 @@ export function formatDateTimeBR(date: Date | string): string {
   }).format(d);
 }
 
+import type { FormaEntrega } from "@/types/database";
+
+export const FORMA_ENTREGA_LABEL: Record<FormaEntrega, string> = {
+  envio: "Envio",
+  retirada: "Retirada na loja",
+};
+
 export const SITE_CONFIG = {
   name: "Mércia Regina · Beleza e Bronzeamento",
   shortName: "Mércia Regina",

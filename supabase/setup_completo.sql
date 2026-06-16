@@ -384,6 +384,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   stripe_payment_intent TEXT,
   stripe_checkout_session TEXT,
   endereco_entrega JSONB,
+  forma_entrega TEXT CHECK (
+    forma_entrega IS NULL OR forma_entrega IN ('envio', 'retirada')
+  ),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

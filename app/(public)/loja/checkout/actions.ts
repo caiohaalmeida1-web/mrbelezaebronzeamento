@@ -4,27 +4,29 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "@/lib/stripe";
+import type { FormaEntrega } from "@/types/database";
 
 const ItemSchema = z.object({
   id: z.string(),
   quantidade: z.number().int().min(1),
 });
 
+const EnderecoSchema = z.object({
+  cep: z.string().min(1),
+  rua: z.string().min(1),
+  numero: z.string().min(1),
+  complemento: z.string().optional(),
+  bairro: z.string().min(1),
+  cidade: z.string().min(1),
+  estado: z.string().min(1),
+});
+
 const FinalizarSchema = z.object({
   itens: z.array(ItemSchema).min(1),
-  endereco: z
-    .object({
-      cep: z.string(),
-      rua: z.string(),
-      numero: z.string(),
-      complemento: z.string().optional(),
-      bairro: z.string(),
-      cidade: z.string(),
-      estado: z.string(),
-    })
-    .optional(),
+  formaEntrega: z.enum(["envio", "retirada"]).optional(),
+  endereco: EnderecoSchema.optional(),
   email: z.string().email(),
-  nome: z.string(),
+  nome: z.string().min(1),
 });
 
 export type FinalizarState = {
@@ -47,7 +49,6 @@ export async function finalizarPedido(
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Busca produtos para conferir estoque e preço
   const ids = parsed.data.itens.map((i) => i.id);
   const { data: produtosDb } = await admin
     .from("produtos")
@@ -60,7 +61,11 @@ export async function finalizarPedido(
   }
 
   let total = 0;
-  const itensCalculados: { produto_id: string; quantidade: number; preco_unitario: number }[] = [];
+  const itensCalculados: {
+    produto_id: string;
+    quantidade: number;
+    preco_unitario: number;
+  }[] = [];
 
   for (const item of parsed.data.itens) {
     const prod = produtosDb.find((p) => p.id === item.id);
@@ -82,14 +87,33 @@ export async function finalizarPedido(
     });
   }
 
-  // Cria pedido
+  const temFisico = produtosDb.some((p) => p.tipo === "fisico");
+  let formaEntrega: FormaEntrega | null = null;
+  let enderecoEntrega: z.infer<typeof EnderecoSchema> | null = null;
+
+  if (temFisico) {
+    formaEntrega = parsed.data.formaEntrega ?? "envio";
+
+    if (formaEntrega === "envio") {
+      const enderecoParsed = EnderecoSchema.safeParse(parsed.data.endereco);
+      if (!enderecoParsed.success) {
+        return {
+          ok: false,
+          message: "Informe o endereço completo para envio.",
+        };
+      }
+      enderecoEntrega = enderecoParsed.data;
+    }
+  }
+
   const { data: pedido, error: pedErr } = await admin
     .from("pedidos")
     .insert({
       cliente_id: user?.id ?? null,
       status: "pendente",
       valor_total: total,
-      endereco_entrega: parsed.data.endereco ?? null,
+      endereco_entrega: enderecoEntrega,
+      forma_entrega: formaEntrega,
     })
     .select("id")
     .single();
@@ -117,6 +141,7 @@ export async function finalizarPedido(
         metadata: {
           pedido_id: pedido.id,
           cliente_email: parsed.data.email,
+          forma_entrega: formaEntrega ?? "digital",
         },
       });
       clientSecret = intent.client_secret ?? undefined;

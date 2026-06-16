@@ -19,6 +19,7 @@ export type StatusPedido =
   | "entregue"
   | "cancelado"
   | "reembolsado";
+export type FormaEntrega = "envio" | "retirada";
 export type TipoProduto =
   | "fisico"
   | "digital"
@@ -121,6 +122,7 @@ export interface Pedido {
   stripe_payment_intent: string | null;
   stripe_checkout_session: string | null;
   endereco_entrega: Record<string, unknown> | null;
+  forma_entrega: FormaEntrega | null;
   created_at: string;
   updated_at: string;
 }

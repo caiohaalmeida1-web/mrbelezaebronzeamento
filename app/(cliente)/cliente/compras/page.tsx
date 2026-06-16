@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { formatBRL } from "@/lib/utils";
+import { formatBRL, FORMA_ENTREGA_LABEL } from "@/lib/utils";
+import type { FormaEntrega } from "@/types/database";
 
 const STATUS_VAR: Record<string, BadgeProps["variant"]> = {
   pendente: "warm",
@@ -19,6 +20,7 @@ interface PedidoComItens {
   id: string;
   status: string;
   valor_total: number;
+  forma_entrega: FormaEntrega | null;
   created_at: string;
   pedido_itens:
     | {
@@ -38,7 +40,7 @@ export default async function ComprasPage() {
   const { data: pedidos } = await supabase
     .from("pedidos")
     .select(
-      "id, status, valor_total, created_at, pedido_itens(quantidade, produtos(nome, slug))"
+      "id, status, valor_total, forma_entrega, created_at, pedido_itens(quantidade, produtos(nome, slug))"
     )
     .eq("cliente_id", user.id)
     .order("created_at", { ascending: false })
@@ -85,6 +87,12 @@ export default async function ComprasPage() {
                   </div>
                   <p className="mt-1 text-xs text-brand-caramel/70">
                     {format(new Date(p.created_at), "dd/MM/yyyy 'às' HH:mm")}
+                    {p.forma_entrega && (
+                      <>
+                        {" · "}
+                        {FORMA_ENTREGA_LABEL[p.forma_entrega]}
+                      </>
+                    )}
                   </p>
                   <ul className="mt-3 space-y-0.5 text-sm text-brand-brown">
                     {p.pedido_itens?.map((it, i) => (
