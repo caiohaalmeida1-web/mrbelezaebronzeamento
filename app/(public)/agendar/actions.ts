@@ -212,16 +212,38 @@ export async function confirmarAgendamento(agendamentoId: string) {
     .eq("id", agend.servico_id)
     .maybeSingle();
 
-  if (cliente?.email && process.env.RESEND_API_KEY) {
+  if (!cliente?.email) {
+    console.warn("[email confirmacao] e-mail do cliente ausente — envio ignorado", {
+      agendamentoId,
+      clienteId: agend.cliente_id,
+    });
+  } else if (!process.env.RESEND_API_KEY) {
+    console.warn(
+      "[email confirmacao] RESEND_API_KEY não configurada — envio ignorado",
+      { agendamentoId, email: cliente.email }
+    );
+  } else {
     try {
-      await sendAgendamentoConfirmation(cliente.email, {
+      const result = await sendAgendamentoConfirmation(cliente.email, {
         nomeCliente: cliente.full_name,
         servico: servico?.nome ?? "Sessão",
         dataHora: formatDateTimeBR(agend.data_hora),
         endereco: SITE_CONFIG.address,
       });
+      console.log("[email confirmacao] concluído", {
+        agendamentoId,
+        email: cliente.email,
+        messageId: result.data?.id ?? null,
+      });
     } catch (e) {
-      console.error("[email confirmacao] erro", e);
+      console.error("[email confirmacao] falha ao enviar", {
+        agendamentoId,
+        email: cliente.email,
+        error:
+          e instanceof Error
+            ? { name: e.name, message: e.message, stack: e.stack }
+            : e,
+      });
     }
   }
 

@@ -24,13 +24,61 @@ export async function sendAgendamentoConfirmation(
   to: string,
   data: AgendamentoEmailData
 ) {
-  const resend = getResend();
-  return resend.emails.send({
-    from: `Mércia Regina <${FROM_EMAIL}>`,
+  const from = `Mércia Regina <${FROM_EMAIL}>`;
+  const subject = "Seu agendamento está confirmado ✨";
+
+  console.log("[resend] agendamento — iniciando envio", {
     to,
-    subject: "Seu agendamento está confirmado ✨",
-    html: agendamentoEmailHtml(data),
+    from,
+    subject,
+    servico: data.servico,
+    dataHora: data.dataHora,
+    endereco: data.endereco,
   });
+
+  try {
+    const resend = getResend();
+    const result = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html: agendamentoEmailHtml(data),
+    });
+
+    if (result.error) {
+      console.error("[resend] agendamento — erro retornado pela API", {
+        to,
+        from,
+        subject,
+        error: result.error,
+        responseData: result.data,
+      });
+      throw new Error(
+        result.error.message ?? "Resend retornou erro sem mensagem"
+      );
+    }
+
+    console.log("[resend] agendamento — enviado com sucesso", {
+      to,
+      from,
+      subject,
+      messageId: result.data?.id ?? null,
+      responseData: result.data,
+    });
+
+    return result;
+  } catch (e) {
+    console.error("[resend] agendamento — exceção ao chamar API", {
+      to,
+      from,
+      subject,
+      error:
+        e instanceof Error
+          ? { name: e.name, message: e.message, stack: e.stack }
+          : e,
+    });
+    throw e;
+  }
 }
 
 function agendamentoEmailHtml(d: AgendamentoEmailData): string {
